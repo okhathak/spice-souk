@@ -127,11 +127,14 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 @keyframes rise{to{transform:translateY(-50px);opacity:0}}
 .shake{animation:shake .35s}
 @keyframes shake{20%{transform:translate(-5px,2px)}40%{transform:translate(5px,-2px)}60%{transform:translate(-3px,1px)}80%{transform:translate(3px,0)}}
-.toast{position:absolute;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;background:var(--cream);color:var(--ink);border-radius:16px;padding:10px 14px;max-width:88%;width:max-content;font-size:14px;line-height:1.35;box-shadow:0 10px 24px rgba(0,0,0,.35);transition:.35s;z-index:30;pointer-events:none;text-align:center}
+.toast{position:absolute;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;background:var(--cream);color:var(--ink);border-radius:16px;padding:10px 14px;max-width:88%;width:max-content;font-size:14px;line-height:1.35;box-shadow:0 10px 24px rgba(0,0,0,.35);transition:.35s;z-index:41;pointer-events:none;text-align:center}
 .toast b{font-family:var(--display);font-size:16px;display:block}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .hand{position:fixed;z-index:40;font-size:34px;pointer-events:none;transform:translate(-50%,-100%);animation:poke .9s ease-in-out infinite;filter:drop-shadow(0 3px 2px rgba(0,0,0,.45));transition:left .25s,top .25s}
 .hand[hidden]{display:none}
+.spot{position:fixed;z-index:39;pointer-events:none;border-radius:18px;box-shadow:0 0 0 200vmax rgba(10,4,1,.68),0 0 0 3px rgba(255,214,120,.9),0 0 22px 4px rgba(255,200,90,.55);transition:left .25s,top .25s,width .25s,height .25s}
+.spot[hidden]{display:none}
+.info{width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.32);color:var(--cream);font:700 20px Georgia,serif;font-style:italic;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .hand small{position:absolute;left:50%;bottom:100%;transform:translateX(-50%);white-space:nowrap;background:var(--cream);color:var(--ink);font:700 13px var(--body);padding:5px 10px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.3)}
 @keyframes poke{0%,100%{margin-top:0}50%{margin-top:-10px}}
 
@@ -161,7 +164,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 
 .duelhud{display:none;flex-direction:column;gap:4px;padding:6px 14px 0}
 body.duel .duelhud{display:flex}
-body.duel .stall,body.duel #chest,body.duel .sack .cost,body.duel #bookBtn,body.duel #shopBtn,body.duel #duelBtn,body.duel #energyChip .bolt{display:none}
+body.duel .stall,body.duel #chest,body.duel .sack .cost,body.duel #bookBtn,body.duel #shopBtn,body.duel #duelBtn,body.duel #energyChip .bolt,body.duel #infoBtn{display:none}
 .pl{display:grid;grid-template-columns:minmax(0,6em) 1fr 2.6em;align-items:center;gap:8px;font-size:14px;min-height:18px}
 .pl b{font-family:var(--display);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pl .tr{height:10px;border-radius:5px;background:rgba(0,0,0,.35);overflow:hidden}
@@ -236,6 +239,7 @@ body.duel #crateBtn{display:none}
 <div class="app" id="app">
   <div class="top">
     <div class="souk"><b id="soukName">Deira Spice Souk</b><div class="xpbar"><i id="xp"></i></div><span class="lvl" id="lvl">Level 1</span></div>
+    <button class="info" id="infoBtn" type="button" aria-label="How to play">i</button>
     <div class="chip" id="coinChip"><span class="coin"></span><span id="coins">0</span></div>
     <div class="chip" id="energyChip"><span class="bolt"></span><span id="energy">30</span><small id="etimer"></small></div>
   </div>
@@ -252,6 +256,7 @@ body.duel #crateBtn{display:none}
     <button class="icon" id="duelBtn" type="button" aria-label="Duel with friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l11 11M20 4L9 15"/><path d="M13 17l4 4M11 17l-4 4M17 13l4 4M7 13l-4 4"/></svg>Duel</button>
   </div>
   <div class="toast" id="toast"></div>
+  <div class="spot" id="spot" hidden></div>
   <div class="hand" id="hand" hidden>👇<small id="handTxt"></small></div>
   <div class="countdown" id="countdown" hidden></div>
 
@@ -280,7 +285,7 @@ body.duel #crateBtn{display:none}
 
   <div class="sheet intro" id="intro"><div class="card">
     <h2>Welcome to the souk</h2>
-    <p>Three things, then I'll show you.</p>
+    <p>You run a spice stall. Customers order dishes, and you make the spices they need.</p>
     <div class="steps">
       <div><span>1</span><p>Tap the <b>Sack</b> for a spice.</p></div>
       <div><span>2</span><p>Match <b>two of the same</b> to make a better one.</p></div>
@@ -455,13 +460,17 @@ function render(){renderCrateBtn();renderTop();renderOrders();renderBoard();rend
    tapped the sack, merged once and served once. Existing players never see it. */
 function pairCells(){const seen={};for(let i=0;i<N;i++){const t=S.cells[i];if(t==null||t>=MAX)continue;if(seen[t]!=null)return[seen[t],i];seen[t]=i}return null}
 function guide(){const h=$('hand');if(!h)return;const g=S.guide;
-  if(S.duel||!S.intro||g==null||g>=3||!$('intro').hidden){h.hidden=true;return}
+  const sp=$('spot');if(S.duel||!S.intro||g==null||g>=3||!$('intro').hidden){h.hidden=true;sp.hidden=true;return}
+  let focus=null;
   let el=null,txt='';const pr=pairCells();const ready=document.querySelector('.serve.ready');
-  if(g===2&&ready){el=ready;txt='Serve!'}
+  if(g===2&&ready){el=ready;txt='Serve!';focus=[ready.closest('.order')||ready]}
   else if(g>=1&&pr){const target=sel!=null&&S.cells[sel]!=null?(pr.includes(sel)?pr.find(x=>x!==sel):pr[0]):pr[0];
-    el=cellEl(sel!=null&&pr.includes(sel)?target:pr[0]);txt=sel!=null&&pr.includes(sel)?'Now tap its twin':'Tap a pot, then its twin'}
+    el=cellEl(sel!=null&&pr.includes(sel)?target:pr[0]);txt=sel!=null&&pr.includes(sel)?'Now tap its twin':'Tap a pot, then its twin';focus=[cellEl(pr[0]),cellEl(pr[1])]}
   else{el=$('sack');txt=g===0?'Tap the sack':'Tap for more spice'}
-  if(!el){h.hidden=true;return}
+  if(!el){h.hidden=true;sp.hidden=true;return}
+  {const rs=(focus||[el]).filter(Boolean).map(x=>x.getBoundingClientRect());const pad=8;
+   const L=Math.min(...rs.map(r=>r.left))-pad,T=Math.min(...rs.map(r=>r.top))-pad,R=Math.max(...rs.map(r=>r.right))+pad,B=Math.max(...rs.map(r=>r.bottom))+pad;
+   sp.style.left=L+'px';sp.style.top=T+'px';sp.style.width=(R-L)+'px';sp.style.height=(B-T)+'px';sp.hidden=false}
   const r=el.getBoundingClientRect();h.style.left=(r.left+r.width/2)+'px';h.style.top=(r.top+r.height*.62)+'px';$('handTxt').textContent=txt;h.hidden=false}
 addEventListener('resize',()=>guide());
 function cellEl(i){return $('board').children[i]}
@@ -623,6 +632,7 @@ board.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const c=e.
 
 /* ---------- buttons & sheets ---------- */
 $('sack').onclick=sack;
+$('infoBtn').onclick=()=>{if(S.duel)return;S.guide=0;$('intro').hidden=false;guide()};
 $('startBtn').onclick=()=>{audio();S.intro=true;$('intro').hidden=true;sfx.level();daily();save();idleReset();guide()};
 if(S.intro){$('intro').hidden=true;daily()}
 function openSheet(id){audio();sfx.pick();$(id).hidden=false}
