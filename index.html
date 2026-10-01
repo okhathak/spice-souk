@@ -1,8 +1,8 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Spice Souk</title>
-<meta name="description" content="Merge spices, serve the souk, and restore Grandfather's stall. A free puzzle game you play in your browser.">
+<meta name="description" content="Merge spices, serve the souk, and restore Jaddi Saeed's spice stall. A free puzzle game you play in your browser.">
 <meta property="og:title" content="Spice Souk">
-<meta property="og:description" content="Merge spices, serve the souk, restore Grandfather's stall. Play free in your browser.">
+<meta property="og:description" content="Merge spices, serve the souk, restore Jaddi Saeed's spice stall. Play free in your browser.">
 <meta property="og:image" content="https://okhathak.github.io/spice-souk/og.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta property="og:url" content="https://okhathak.github.io/spice-souk/">
@@ -100,6 +100,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .stall .deco{width:26px;height:26px;display:grid;place-items:center}
 .stall .deco svg{width:26px;height:26px}
 .stall .deco.next{border:1.5px dashed rgba(255,243,220,.4);border-radius:8px;font-family:var(--display);font-size:13px;color:rgba(255,243,220,.6)}
+.stall .deco.more{font:800 12px var(--body);color:#ffd66b;background:rgba(255,243,220,.12);border-radius:8px;width:auto;padding:0 5px}
 .stall .deco.new{animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
 .bubble{position:absolute;left:50%;top:-10px;transform:translate(-50%,-100%);background:#fff;color:var(--ink);border-radius:12px;padding:6px 9px;font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 6px 14px rgba(0,0,0,.3);animation:bub 1.4s forwards;z-index:5;pointer-events:none}
 .bubble:after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-top-color:#fff;border-bottom:0}
@@ -310,6 +311,19 @@ body.duel #crateBtn{display:none}
  .boardwrap{min-height:0}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.letter{display:flex;gap:10px;align-items:flex-start;background:#f6e6c8;border-radius:14px;padding:10px;margin:6px 0 10px;text-align:left}
+.letter .lface{flex:none;width:52px;height:52px;border-radius:50%;background:#ead2a8;overflow:hidden}.letter .lface svg{width:52px;height:52px}
+.letter small{display:block;font:800 12px var(--body);color:#8a5a20;text-transform:uppercase;letter-spacing:.04em}.letter p{margin:3px 0 0;font:700 14px/1.35 var(--body);font-style:italic;color:#4a2412}
+.jsit{flex:none;width:32px;height:32px;border-radius:50%;background:rgba(255,243,220,.16);box-shadow:0 0 0 2px rgba(255,214,107,.55);overflow:hidden;margin-right:2px;transition:box-shadow .4s}.jsit svg{width:32px;height:32px}
+.jsit.proud{box-shadow:0 0 0 2px #ffd66b,0 0 12px rgba(255,214,107,.8)}
+.say.jd{background:#fff3c4;color:#5a3410}.say.jd:after{border-bottom-color:#fff3c4!important}
+.memlist{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow:auto;margin-top:6px}
+.mem{display:flex;gap:10px;align-items:flex-start;background:#f6e6c8;border-radius:12px;padding:9px 10px;text-align:left}.mem .mi{flex:none;width:34px;height:34px}.mem .mi svg{width:34px;height:34px}
+.mem b{display:block;font:800 13px var(--body);color:#8a5a20}.mem p{margin:2px 0 0;font:700 14px/1.35 var(--body);font-style:italic;color:#4a2412}
+.mem.locked{opacity:.55}.mem.locked p{font-style:normal}
+@media (max-height:600px){.jsit,.jsit svg{width:24px;height:24px}}
+@media (max-width:370px){.lane .stall{gap:3px}.jsit,.jsit svg{width:28px;height:28px}.stall .deco,.stall .deco svg{width:22px;height:22px}}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -365,7 +379,7 @@ body.duel #crateBtn{display:none}
 
   <div class="sheet intro" id="intro"><div class="card">
     <h2>Welcome to the souk</h2>
-    <p>Your grandfather’s spice stall has seen better days. Serve customers, earn coins, and restore it.</p>
+    <div class="letter"><div class="lface" id="introFace"></div><div><small>A letter from Jaddi Saeed</small><p>“My child, I opened this spice stall in Deira in 1962. Now my hands are tired and the stall is falling apart. Will you bring it back to life, so our family name stays in the souk?”</p></div></div>
     <div class="steps">
       <div><span>1</span><p>Tap <b>Get spice</b> to add a spice to your tray.</p></div>
       <div><span>2</span><p>Match <b>two of the same</b> to make a better one.</p></div>
@@ -423,7 +437,14 @@ body.duel #crateBtn{display:none}
     <div class="stlist" id="stList"></div>
     <p class="dnote" id="stNeed"></p>
     <button class="btn warm dfull" id="travelBtn" type="button" hidden>Travel</button>
+    <button class="btn dfull" id="memBtn" type="button" style="margin-top:8px">📖 Jaddi’s memories</button>
     <button class="btn" type="button" data-close style="width:100%;margin-top:8px">Close</button>
+  </div></div>
+
+  <div class="sheet" id="memSheet" hidden><div class="card">
+    <h2>Jaddi’s memories</h2><p id="memCount"></p>
+    <div class="memlist" id="memList"></div>
+    <button class="btn" type="button" data-close style="width:100%;margin-top:10px">Close</button>
   </div></div>
 
   <div class="sheet celebrate" id="reward" hidden><div class="card">
@@ -477,7 +498,7 @@ function moodOf(o){if(o.happy)return'happy';const w=(Date.now()-(o.t||Date.now()
 function paused(){return document.hidden||S.duel||S.guide==null||S.guide<3||[...document.querySelectorAll('.sheet,.celebrate')].some(x=>!x.hidden)}
 function walkouts(){if(paused()){S.orders.forEach(o=>{if(o&&o.t)o.t+=1000});return}
   S.orders.forEach((o,k)=>{if(!o||o.happy||o.gone)return;if((Date.now()-o.t)/1000<patience(o).gone)return;o.gone=true;
-    const el=document.querySelectorAll('#orders .order')[k];S.combo=0;sfx.no();setTip(`<b>${esc(o.who)} gave up waiting and left.</b><br>Serve smiling customers for tips.`);
+    const el=document.querySelectorAll('#orders .order')[k];S.combo=0;sfx.no();if((S.jWalk||0)<2){S.jWalk=(S.jWalk||0)+1;setTimeout(()=>jaddiSay('Don’t let them wait too long, habibi…',true),900)}setTip(`<b>${esc(o.who)} gave up waiting and left.</b><br>Serve smiling customers for tips.`);
     if(el){el.classList.add('walkout');setTimeout(()=>{nextCustomer(k);render()},450)}else{nextCustomer(k);render()}})}
 function personSVG(name,mood,bg){const L=lookOf(name),sk=L.sk;let back='',front='',body='';
   body=`<path d="M6 40 C7 31 13 28 20 28 C27 28 33 31 34 40Z" fill="${L.cl}"/>`;
@@ -737,17 +758,26 @@ function perkWait(){return stall().steps.slice(0,builtN()).filter(x=>x.perk==='w
 function perkTip(){return stall().steps.slice(0,builtN()).filter(x=>x.perk==='tip').length*.05}
 
 function decoCount(){return Math.min(DECOR.length,S.level-1)}
+/* Jaddi sits at his own stall: worried while it is broken, proud when it is whole. He speaks only at real moments. */
+let jLast=0;
+function jaddiSay(t,force){const j=$('jaddi');if(!j||document.hidden||S.duel)return false;const now=Date.now();if(now-jLast<4500||(!force&&(now-jLast<90000||document.querySelector('#fx .say')||fight)))return false;
+  document.querySelectorAll('#fx .say').forEach(x=>{if(force)x.remove()});jLast=now;speak(j,t,'line q9 jd');lastSay=now;lastLine=now;return true}
 function renderStall(newest){
-  const n=builtN(),st=stall();let h='';
-  for(let i=0;i<n;i++)h+=`<div class="deco${newest===i?' new':''}" title="${esc(st.steps[i].n)}">${DECOR[i].s}</div>`;
+  const n=builtN(),st=stall();let h=S.duel?'':`<div class="jsit${n>=8?' proud':''}" id="jaddi" title="Jaddi Saeed">${personSVG('Jaddi Saeed',n===0?'wait':n<8?'calm':'happy')}</div>`;
+  const from=Math.max(0,n-2);if(from)h+=`<div class="deco more">+${from}</div>`;for(let i=from;i<n;i++)h+=`<div class="deco${newest===i?' new':''}" title="${esc(st.steps[i].n)}">${DECOR[i].s}</div>`;
   const nx=st.steps[n],can=nx&&S.coins>=nx.c;
-  h+=`<button class="restore${can?' can':''}" id="restoreBtn" type="button" aria-label="Restore the stall">${n<8?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 4l6 6-3 3-6-6zM11 7l-8 8 3 3 8-8"/></svg>${n}/8`:'Restored'}</button>`;
+  h+=`<button class="restore${can?' can':''}" id="restoreBtn" type="button" aria-label="Restore the stall">${n<8?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 4l6 6-3 3-6-6zM11 7l-8 8 3 3 8-8"/></svg>${n}/8`:'8/8 ✓'}</button>`;
   $('stall').innerHTML=h;$('restoreBtn').onclick=openStall;
+  if(can&&!S.duel&&S.jHint!==S.souk*10+n&&S.guide>=3){const key=S.souk*10+n;setTimeout(()=>{if(S.jHint!==key&&jaddiSay(n===0?'You have enough coins! Tap the hammer and fix my lantern.':'Enough coins for the next piece, habibi! 🔨',true))S.jHint=key},700)}
 }
 function openStall(){audio();renderStallSheet();openSheet('stallSheet')}
+function memories(){const out=[];STALLS.forEach((st,si)=>st.steps.forEach((x,i)=>out.push({si,i,x,open:si<S.souk||(si===S.souk&&i<builtN())})));return out}
+function openMem(){const m=memories(),n=m.filter(x=>x.open).length;$('memCount').textContent=`${n} of ${m.length} memories. Restore more of the stall to unlock the rest.`;
+  $('memList').innerHTML=m.map(x=>x.open?`<div class="mem"><span class="mi">${DECOR[x.i].s}</span><div><b>${esc(STALLS[x.si].name)} · ${esc(x.x.n)}</b><p>“${esc(x.x.say)}”</p></div></div>`:`<div class="mem locked"><span class="mi">🔒</span><div><b>${esc(STALLS[x.si].name)}</b><p>Restore “${esc(x.x.n)}” to unlock</p></div></div>`).join('');
+  $('stallSheet').hidden=true;openSheet('memSheet')}
 function renderStallSheet(){const st=stall(),n=builtN(),nx=st.steps[n];
   $('stTitle').textContent=st.name;$('stBar').style.width=(n/8*100)+'%';$('stCount').textContent=`${n} of 8 restored`;
-  $('stGrand').innerHTML=personSVG('Jaddi Saeed','calm');
+  $('stGrand').innerHTML=personSVG('Jaddi Saeed',n===0?'wait':n<8?'calm':'happy');
   $('stSay').textContent=n===0?'This was my stall, habibi. It has seen better days. Serve the customers, earn coins, and bring it back to life.':n<8?st.steps[n-1].say:(S.souk<STALLS.length-1?'The stall is restored. Now go, our family had a stall in '+SOUKS[S.souk+1].n.split(' ')[0]+' too.':st.steps[7].say);
   $('stList').innerHTML=st.steps.map((x,i)=>{const done=i<n,next=i===n;const perk=x.perk==='wait'?'Customers wait 15s longer':'Tips +5%';
     return `<div class="strow${done?' done':''}${next?' next':''}"><span class="sti">${DECOR[i].s}</span><div><b>${esc(x.n)}</b><small>${done?'Done · '+perk:perk}</small></div>${next?`<button class="btn warm" id="buildBtn" type="button"${S.coins<x.c?' disabled':''}><span class="coin"></span>${x.c}</button>`:done?'<span class="tick">✓</span>':`<span class="cost"><span class="coin"></span>${x.c}</span>`}</div>`}).join('');
@@ -758,7 +788,11 @@ function build(){const st=stall(),n=builtN(),x=st.steps[n];if(!x||S.coins<x.c)re
   S.coins-=x.c;S.built=n+1;sfx.level();goal('build');renderStall(n);render();$('stallSheet').hidden=true;
   celebrate({art:`<div style="width:96px;height:96px;margin:auto">${DECOR[n].s}</div>`,title:x.n+'!',text:`“${x.say}” — Jaddi Saeed`,
     list:[x.perk==='wait'?'Customers will wait 15 seconds longer':'Customers tip 5% more',`${n+1} of 8 restored`],btn:n+1>=8?'See the stall':'Keep selling'});
-  if(n+1>=8)setTimeout(()=>{renderStallSheet()},10)}
+  if(n+1>=8){const END=[['Jaddi is back at his stall!','For the first time in years, Jaddi stands behind his counter in Deira. “It smells just like the day I opened it. Our name is back in the souk.”'],
+      ['Jaddi visits Marrakech!','Jaddi flies to Marrakech and his old friend Youssef runs to hug him. “Two stalls, two cities, one family.”'],
+      ['Jaddi’s dream came true','Deira, Marrakech, Istanbul. Jaddi hands you his old brass key. “The caravan road is ours again. The stall is yours now, my child.”']][S.souk]||[];
+    celebrate({art:`<div style="width:110px;height:110px;margin:auto;border-radius:50%;background:#ead2a8;overflow:hidden;box-shadow:0 0 0 4px #ffd66b,0 0 30px rgba(255,214,107,.8)">${personSVG('Jaddi Saeed','happy')}</div>`,title:END[0],text:END[1],list:['8 of 8 restored · 8 new memories in Jaddi’s book'],btn:S.souk<STALLS.length-1?'See the stall':'Keep selling'});
+    setTimeout(()=>{renderStallSheet()},10)}}
 $('travelBtn').onclick=()=>{if(builtN()<8||S.souk>=STALLS.length-1)return;S.souk++;S.built=0;$('stallSheet').hidden=true;
   S.orders=[];S.queue=[];while(S.orders.length<3)S.orders.push(newOrder());S.orders.forEach(o=>o.t=Date.now());renderStall();render();
   celebrate({art:'<div style="font-size:72px;line-height:1">🐪</div>',title:'Welcome to '+SOUKS[S.souk].n,text:'A new stall to restore, new faces, new stories.',list:['Your coins and spices come with you'],btn:'Open the stall'})};
@@ -849,7 +883,7 @@ function serve(k,el){
   const taken=[];
   o.n.forEach((t,j)=>{const i=S.cells.findIndex((v,x)=>v===t&&!taken.includes(x));taken.push(i);const ce=cellEl(i);flyPot(ce,el,t,j*90);burst(ce,SPICES[t].c,8)});
   taken.forEach(i=>S.cells[i]=null);
-  const now=Date.now();S.combo=(now-(S.lastServe||0)<15000)?(S.combo||1)+1:1;S.lastServe=now;S.served=(S.served||0)+1;if(!S.duel&&S.served%CRATE_EVERY===0)crateArrives();
+  const now=Date.now();S.combo=(now-(S.lastServe||0)<15000)?(S.combo||1)+1:1;if(!S.duel){if(!S.jFirst){S.jFirst=1;setTimeout(()=>jaddiSay('That’s how I did it in 1962! 👏',true),1600)}else if(S.combo===3)setTimeout(()=>jaddiSay('Ya salam! Just like the old days!'),1400)}S.lastServe=now;S.served=(S.served||0)+1;if(!S.duel&&S.served%CRATE_EVERY===0)crateArrives();
   const mood=moodOf(o),tipR=mood==='calm'?.25+perkTip():mood==='wait'?perkTip():-.25;
   const base=Math.round(o.n.reduce((s,t)=>s+(t+1)*(t+1)*3,5)*(o.vip?2:1)),bonus=S.combo>1?Math.round(base*.25*(S.combo-1)):0,tipAmt=Math.round((base+bonus)*tipR),pay=Math.max(1,base+bonus+tipAmt),xp=o.n.reduce((s,t)=>s+t+2,0);
   sfx.serve();buzz(25);el.classList.add('happy');o.happy=true;el.querySelector('.face').innerHTML=personSVG(o.who,'happy')+'<span class="mood">❤️</span>';el.dataset.mood='happy';
@@ -862,7 +896,7 @@ function serve(k,el){
     setTimeout(()=>{if(S!==st)return;const sv=S;S=st;nextCustomer(k);S=sv;render()},700);setTip(S.combo>1?'Combo! Keep serving.':`${S.served} served. Keep going!`);return}
   flyCoins(el,Math.min(10,2+Math.floor(pay/12)),()=>{st.coins+=pay;if(S===st){renderTop();save()}});
   flyStar(el,o.n.length);
-  if(S.guide===2){S.guide=3;guide();setTimeout(()=>{toast('<b>You\'ve got it!</b>Earn coins, then tap the hammer to restore Grandfather\'s stall.',4200);setTimeout(daily,4000)},1200)}
+  if(S.guide===2){S.guide=3;guide();setTimeout(()=>{toast('<b>You\'ve got it!</b>Earn coins, then tap the hammer to restore Jaddi\'s stall.',4200);setTimeout(daily,4000)},1200)}
   S.xp+=xp;
   setTimeout(()=>{if(S!==st)return;el.classList.add('leave');setTimeout(()=>{if(S!==st)return;nextCustomer(k);levelCheck();render()},320)},800);
   setTip(S.combo>1?`Combo! Serve again within 15 seconds to keep it going.`:`${o.who} loved the ${o.d}. ${S.served} customers served.`);
@@ -907,7 +941,7 @@ $('fbSend').onclick=async()=>{if(!fb.fun)return;const m=fbBody();S.nick=m.name==
   const url=`mailto:${FB_TO}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.body)}`;location.href=url;
   $('fbMsg').innerHTML='Your email app should open with everything filled in. Just press Send. 🙏<br><button type="button" class="fblink" id="fbCopy">Email didn’t open? Copy it instead</button>';
   $('fbCopy').onclick=async()=>{try{await navigator.clipboard.writeText(m.subject+'\n\n'+m.body);$('fbMsg').textContent='Copied. Paste it in a message to Nasser or email '+FB_TO+'.'}catch(e){$('fbMsg').textContent='Please email '+FB_TO}}};
-$('fbOpen1').onclick=openFb;$('fbOpen2').onclick=openFb;
+$('fbOpen1').onclick=openFb;$('memBtn').onclick=openMem;$('introFace').innerHTML=personSVG('Jaddi Saeed','wait');$('fbOpen2').onclick=openFb;
 const GOALS={serve:n=>`Serve ${n} customers`,happy:n=>`Serve ${n} customers while they smile`,earn:n=>`Earn ${n} coins`,combo:n=>`Get a ${n}× combo`,make:t=>`Make a ${SPICES[t].n}`,build:()=>'Restore one part of the stall'};
 function goals(){if(S.duel)return null;if(!S.dg||S.dg.day!==today()){
     const L=S.level,pool=[{k:'serve',goal:6+L},{k:'happy',goal:3},{k:'earn',goal:120+L*30},{k:'combo',goal:3},{k:'make',goal:Math.min(maxTier(),2+(L>2?1:0))}];
