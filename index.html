@@ -44,6 +44,19 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .ohead>div{min-width:0}
 .face{width:28px;height:28px;flex:none;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;color:#fff;font-size:13px;position:relative}
 .face .mood{position:absolute;bottom:-4px;right:-6px;font-size:14px}
+.face{width:38px!important;height:38px!important;background:none!important;padding:0}.face svg{width:100%;height:100%;display:block;border-radius:50%}
+.order[data-mood="cross"] .face{animation:fidget 1.4s ease-in-out infinite}
+.order[data-mood="cross"]{box-shadow:0 0 0 2px #e0705a inset}
+@keyframes fidget{0%,100%{transform:translateX(0)}20%{transform:translateX(-1.5px) rotate(-3deg)}40%{transform:translateX(1.5px) rotate(3deg)}60%{transform:none}}
+.order.leave{transition:transform .32s ease-in,opacity .32s;transform:translateX(40px) scale(.9);opacity:0}
+.order.in .face{animation:walkin .5s ease-out}
+@keyframes walkin{0%{transform:translateX(-30px)}60%{transform:translateX(3px)}100%{transform:none}}
+.lane{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 12px 0;min-height:36px}.lane .stall{padding:0;min-height:0;flex:1;justify-content:flex-end;min-width:0}.lane .stall span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.queue{display:flex;align-items:center;gap:5px;flex:none}
+.qlabel{font-size:12px;font-weight:700;color:var(--muted);margin-right:2px}
+.qp{width:30px;height:30px;border-radius:50%;opacity:calc(1 - var(--i)*.22);animation:bob 2.4s ease-in-out infinite;animation-delay:calc(var(--i)*-.6s)}
+.qp svg{width:100%;height:100%;display:block}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
 .oname{font-size:12.5px;font-weight:800;opacity:.65;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dish{font-family:var(--display);font-weight:600;font-size:13px;line-height:1.1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .wants{font-size:12px;font-weight:800;opacity:.6;align-self:flex-start;padding-left:2px}
@@ -241,7 +254,7 @@ body.duel #crateBtn{display:none}
  .bar{padding-top:6px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}.sack,.icon{min-height:50px}.serve{min-height:42px}
 }
 @media (max-height:600px){
- .awning,.stall,.oname,.face,.wants{display:none}
+ .awning,.lane,.oname,.wants,.face{display:none}
  .top{padding-top:calc(4px + env(safe-area-inset-top,0px));padding-bottom:0}.xpbar{margin:2px 0}.lvl{display:none}
  .orders{padding:4px 8px 2px;gap:6px}.order{padding:5px 5px 5px;gap:3px;border-radius:12px}
  .need{min-height:26px}.need .mini{width:22px;height:22px}.serve{min-height:36px;font-size:13px}
@@ -264,7 +277,7 @@ body.duel #crateBtn{display:none}
     <div class="chip" id="energyChip"><span class="bolt"></span><span id="energy">30</span><small id="etimer"></small></div>
   </div>
   <div class="awning"></div>
-  <div class="stall" id="stall" aria-label="Your stall decorations"></div>
+  <div class="lane"><div class="queue" id="queue" aria-label="Customers waiting in line"></div><div class="stall" id="stall" aria-label="Your stall decorations"></div></div>
   <div class="duelhud" id="duelHud" aria-live="polite"></div>
   <div class="orders" id="orders"></div>
   <div class="tiprow"><button class="chest" id="chest" type="button" aria-label="Souk chest"><svg viewBox="0 0 32 28"><rect x="3" y="11" width="26" height="15" rx="2" fill="#8a4a1c" stroke="#3f1d0c" stroke-width="1.5"/><path d="M3 12 Q16 0 29 12Z" fill="#a85a22" stroke="#3f1d0c" stroke-width="1.5"/><rect x="3" y="15" width="26" height="3" fill="#e9b85a"/><rect x="14" y="13" width="4" height="7" rx="1" fill="#f4c04e" stroke="#7a4c10"/></svg><div class="meter"><i id="chestFill"></i></div><small id="chestTxt">0/5</small></button><button class="chest crate" id="crateBtn" type="button" aria-label="Spice crate, tap to sort it" hidden><span style="font-size:26px;line-height:1">📦</span><small>Sort!</small></button><div class="tip" id="tip">Tap <b>Get spice</b> to start.</div></div>
@@ -364,6 +377,37 @@ const SOUKS=[
  {n:'Istanbul Grand Bazaar',at:7,people:['Mehmet','Elif','Can','Zeynep','Emre','Ayşe']}
 ];
 const FACES=['#c0643a','#6b8e4e','#4f79a8','#a0527a','#8a6a3a','#3f8f8a'];
+/* customers are drawn people: skin, headwear and clothes per name; their face shows how long they've waited */
+const LOOK={
+ 'Umm Saeed':{w:'shayla',sk:'#c99a73',cl:'#1d1714',old:1},'Khalid':{w:'ghutra',sk:'#b98560',cl:'#f4f1ea',beard:1},'Mariam':{w:'shayla',sk:'#d8ab84',cl:'#2b1f2e'},
+ 'Rashid':{w:'shemagh',sk:'#a8744f',cl:'#f4f1ea',beard:1},'Aisha':{w:'hijab',sk:'#e0b48d',cl:'#7a3b52',hc:'#b8546f'},'Hamdan':{w:'ghutra',sk:'#c58f66',cl:'#f4f1ea'},
+ 'Noura':{w:'hijab',sk:'#cf9c74',cl:'#2f4f6b',hc:'#3d7aa8'},
+ 'Youssef':{w:'fez',sk:'#b07a52',cl:'#6b4a2a',beard:1},'Fatima':{w:'hijab',sk:'#c48f68',cl:'#5c6b2e',hc:'#8a9a3c'},'Karim':{w:'hair',sk:'#a87250',cl:'#3d5a80',hair:'#2a1b12',beard:1},
+ 'Salma':{w:'long',sk:'#d9a882',cl:'#a0527a',hair:'#3a2216'},'Omar':{w:'kufi',sk:'#9a6646',cl:'#e9e2d0',beard:1},'Leila':{w:'long',sk:'#e3b691',cl:'#3f8f8a',hair:'#1f140d'},
+ 'Mehmet':{w:'hair',sk:'#d6a37c',cl:'#4b5563',hair:'#33241a',moust:1},'Elif':{w:'long',sk:'#efc3a0',cl:'#c0643a',hair:'#6b3d1f'},'Can':{w:'hair',sk:'#e2b18c',cl:'#2f6f5e',hair:'#1c1310'},
+ 'Zeynep':{w:'long',sk:'#ebbd98',cl:'#4f79a8',hair:'#2a1a12'},'Emre':{w:'hair',sk:'#d1a07a',cl:'#8a6a3a',hair:'#3b2a1e',beard:1},'Ayşe':{w:'hijab',sk:'#e6b994',cl:'#6b4e8a',hc:'#9b7bc0'}};
+function lookOf(name){return LOOK[name]||{w:'hair',sk:'#c99a73',cl:'#6b8e4e',hair:'#2a1b12'}}
+function moodOf(o){if(o.happy)return'happy';const w=(Date.now()-(o.t||Date.now()))/1000;return w<25?'calm':w<50?'wait':'cross'}
+function personSVG(name,mood,bg){const L=lookOf(name),sk=L.sk;let back='',front='',body='';
+  body=`<path d="M6 40 C7 31 13 28 20 28 C27 28 33 31 34 40Z" fill="${L.cl}"/>`;
+  if(L.w==='ghutra'||L.w==='shemagh'){const cloth=L.w==='shemagh'?'url(#chk)':'#fbfaf6';
+    back=`<path d="M9.5 18 C9 9 13.5 5.5 20 5.5 C26.5 5.5 31 9 30.5 18 L32 33 L24 30 L16 30 L8 33Z" fill="${cloth}" stroke="#d9d2c2" stroke-width=".6"/>`;
+    front=`<path d="M12.5 15 C13 10 16 8.6 20 8.6 C24 8.6 27 10 27.5 15" fill="none" stroke="${L.w==='shemagh'?'#c03a2b':'#e7e1d3'}" stroke-width="2.4"/><ellipse cx="20" cy="8.3" rx="8.6" ry="2.3" fill="none" stroke="#1b1b1b" stroke-width="1.7"/>`}
+  else if(L.w==='shayla'){back=`<path d="M9 19 C9 8.5 13.5 5 20 5 C26.5 5 31 8.5 31 19 L33 36 L7 36Z" fill="#1b1716"/>`;front=`<path d="M12.6 14 C13.5 9.8 16.4 8.4 20 8.4 C23.6 8.4 26.5 9.8 27.4 14" fill="none" stroke="#1b1716" stroke-width="2.6"/>`}
+  else if(L.w==='hijab'){back=`<path d="M9 19 C9 8.5 13.5 5 20 5 C26.5 5 31 8.5 31 19 L32 31 C28 30 24 29.5 20 29.5 C16 29.5 12 30 8 31Z" fill="${L.hc}"/>`;front=`<path d="M12.6 14 C13.5 9.8 16.4 8.4 20 8.4 C23.6 8.4 26.5 9.8 27.4 14" fill="none" stroke="${L.hc}" stroke-width="2.6"/>`}
+  else if(L.w==='long'){back=`<path d="M10 18 C9.5 9 14 6 20 6 C26 6 30.5 9 30 18 L31.5 29 L8.5 29Z" fill="${L.hair}"/>`;front=`<path d="M12.5 15 C13 9.5 16.5 8 20 8 C23.5 8 27 9.5 27.5 15 C25 12 22 11 20 11.5 C17.5 11 14.5 12.5 12.5 15Z" fill="${L.hair}"/>`}
+  else if(L.w==='fez'){front=`<path d="M14.5 10 L15.5 4.5 L24.5 4.5 L25.5 10Z" fill="#b3261e"/><path d="M24 5 Q27 6 26.5 10" fill="none" stroke="#1b1b1b" stroke-width=".9"/><path d="M13 13 C13.5 10.5 16 9.6 20 9.6 C24 9.6 26.5 10.5 27 13" fill="#2a1b12"/>`}
+  else if(L.w==='kufi'){front=`<path d="M13 12 C13.5 7 16.5 6 20 6 C23.5 6 26.5 7 27 12Z" fill="#f4f1ea" stroke="#d9d2c2" stroke-width=".6"/>`}
+  else {front=`<path d="M12.6 15 C12.5 8.5 16 6.6 20 6.6 C24 6.6 27.5 8.5 27.4 15 C26 12 24 11 20 11 C16 11 14 12 12.6 15Z" fill="${L.hair}"/>`}
+  const eyeY=17.6,mouth=mood==='happy'?'M16.6 22.2 Q20 25.6 23.4 22.2':mood==='calm'?'M17.2 22.6 Q20 24.4 22.8 22.6':mood==='wait'?'M17.4 23.4 L22.6 23.4':'M17.2 24.4 Q20 22 22.8 24.4';
+  const brows=mood==='cross'?`<path d="M15.2 15 L18.2 15.9 M24.8 15 L21.8 15.9" stroke="#2a1b12" stroke-width="1.1" stroke-linecap="round"/>`:mood==='wait'?`<path d="M15.4 15.4 L18.2 15.4 M21.8 15.4 L24.6 15.4" stroke="#2a1b12" stroke-width=".9" stroke-linecap="round"/>`:'';
+  const eyes=mood==='happy'?`<path d="M15.8 ${eyeY} Q16.9 16.4 18 ${eyeY} M22 ${eyeY} Q23.1 16.4 24.2 ${eyeY}" stroke="#2a1b12" stroke-width="1.1" fill="none" stroke-linecap="round"/>`:`<circle cx="16.9" cy="${eyeY}" r="1.15" fill="#2a1b12"/><circle cx="23.1" cy="${eyeY}" r="1.15" fill="#2a1b12"/>`;
+  const beard=L.beard?`<path d="M13.6 20 C14 26.5 17 28 20 28 C23 28 26 26.5 26.4 20 C25 23 23 24 20 24 C17 24 15 23 13.6 20Z" fill="#2a1b12" opacity=".85"/>`:L.moust?`<path d="M16.8 21.4 Q20 20 23.2 21.4 Q20 22.4 16.8 21.4Z" fill="#2a1b12"/>`:'';
+  const cheeks=mood==='happy'?`<circle cx="15" cy="21" r="1.4" fill="#e0705a" opacity=".35"/><circle cx="25" cy="21" r="1.4" fill="#e0705a" opacity=".35"/>`:'';
+  const sweat=mood==='cross'?`<path d="M28.4 13 Q29.6 15.4 28.4 16.4 Q27.2 15.4 28.4 13Z" fill="#7cc4ef"/>`:'';
+  const lines=L.old?`<path d="M14.6 19.6 L15.6 19.9 M25.4 19.6 L24.4 19.9" stroke="#8a5a3a" stroke-width=".6"/>`:'';
+  return `<svg viewBox="0 0 40 40" aria-hidden="true"><defs><pattern id="chk" width="2.4" height="2.4" patternUnits="userSpaceOnUse"><rect width="2.4" height="2.4" fill="#fbfaf6"/><rect width="1.2" height="1.2" fill="#c03a2b"/><rect x="1.2" y="1.2" width="1.2" height="1.2" fill="#c03a2b"/></pattern></defs>
+   <circle cx="20" cy="20" r="20" fill="${bg||'#f0dcbc'}"/>${back}${body}<rect x="17.6" y="24" width="4.8" height="5" fill="${sk}"/><ellipse cx="20" cy="17" rx="7.4" ry="8.4" fill="${sk}"/>${lines}${cheeks}${beard}${eyes}${brows}<path d="${mouth}" stroke="#5a2414" stroke-width="1.2" fill="none" stroke-linecap="round"/>${front}${sweat}</svg>`}
 const COLS=4,ROWS=5,N=COLS*ROWS,EMAX=30,EREGEN=15000;
 const SACK_UP=[{p:.15,cost:120},{p:.3,cost:300},{p:.45,cost:700},{p:.6,cost:null}];
 
@@ -432,13 +476,13 @@ function canServe(o){const c=counts(),need={};o.n.forEach(t=>need[t]=(need[t]||0
 function newOrder(){
   const mt=maxTier(),taken=S.orders.map(o=>o&&o.d);
   if(S.duel){const dp=DISHES.filter(x=>x.n.every(t=>t<=mt));let x,g=0;do{x=dp[Math.floor(S.rng()*dp.length)]}while(taken.includes(x.d)&&++g<20);
-    const names=S.orders.map(o=>o&&o.who),people=SOUKS[0].people.filter(p=>!names.includes(p));return {d:x.d,n:x.n.slice(),who:pick(people),col:pick(FACES),fresh:true}}
+    const names=S.orders.concat(S.queue||[]).map(o=>o&&o.who),people=SOUKS[0].people.filter(p=>!names.includes(p));return {d:x.d,n:x.n.slice(),who:pick(people.length?people:SOUKS[0].people),col:pick(FACES),fresh:true}}
   let pool=DISHES.filter(x=>x.n.every(t=>t<=mt)&&!taken.includes(x.d));
   // lean toward harder dishes as you level
   pool.sort(()=>Math.random()-.5);pool.sort((a,b)=>Math.max(...b.n)-Math.max(...a.n));
   const x=pool[Math.floor(Math.random()*Math.min(pool.length,5))]||DISHES[1];
-  const names=S.orders.map(o=>o&&o.who),people=SOUKS[soukIdx()].people.filter(p=>!names.includes(p));
-  return {d:x.d,n:x.n.slice(),who:pick(people),col:pick(FACES),fresh:true};
+  const names=S.orders.concat(S.queue||[]).map(o=>o&&o.who),people=SOUKS[soukIdx()].people.filter(p=>!names.includes(p));
+  return {d:x.d,n:x.n.slice(),who:pick(people.length?people:SOUKS[soukIdx()].people),col:pick(FACES),fresh:true};
 }
 while(S.orders.length<3)S.orders.push(newOrder());
 
@@ -462,13 +506,19 @@ function renderTop(){
   const k=soukIdx();$('soukName').textContent=SOUKS[k].n;document.body.dataset.souk=k;
   $('sack').classList.toggle('empty',S.energy<=0);
 }
-function renderOrders(){
+function fillQueue(){if(!S.queue)S.queue=[];while(S.queue.length<3){const o=newOrder();o.fresh=false;S.queue.push(o)}}
+function nextCustomer(k){fillQueue();const o=S.queue.shift();o.fresh=true;o.t=Date.now();S.orders[k]=o;fillQueue();return o}
+function renderQueue(){const q=$('queue');if(!q)return;fillQueue();
+  q.innerHTML=`<span class="qlabel">In line</span>`+S.queue.map((o,i)=>`<div class="qp" style="--i:${i}" title="${esc(o.who)}">${personSVG(o.who,'calm','rgba(255,243,220,.18)')}</div>`).join('')}
+function updateMoods(){document.querySelectorAll('#orders .order').forEach((d,i)=>{const o=S.orders[i];if(!o)return;const m=moodOf(o);if(d.dataset.mood!==m){d.dataset.mood=m;const f=d.querySelector('.face');if(f)f.innerHTML=personSVG(o.who,m)+(o.happy?'<span class="mood">❤️</span>':'')}})}
+function renderOrders(){renderQueue();
   const c=counts();const box=$('orders');box.innerHTML='';
   S.orders.forEach((o,i)=>{
     const ready=canServe(o);const used={};
     const needs=o.n.map(t=>{used[t]=(used[t]||0)+1;const have=(c[t]||0)>=used[t];return `<div class="need${have?' have':''}" style="--tc:${POTS[t][0]}" aria-label="Needs ${SPICES[t].n}, number ${t+1}${have?', on your tray':''}">${jarHTML(t,true)}<span class="num">${t+1}</span><span class="nm">${SPICES[t].n}</span><span class="ok"></span></div>`}).join('');
     const d=document.createElement('div');d.className='order'+(o.fresh?' in':'');o.fresh=false;
-    d.innerHTML=`<div class="ohead"><div class="face" style="background:${o.col}">${o.who[0]}</div><div><div class="dish">${o.d}</div><div class="oname">${o.who}</div></div></div><div class="needs">${needs}</div><button type="button" class="serve${ready?' ready':''}">${ready?'Serve':'Waiting'}</button>`;
+    if(!o.t)o.t=Date.now();const m=moodOf(o);d.dataset.mood=m;
+    d.innerHTML=`<div class="ohead"><div class="face">${personSVG(o.who,m)}</div><div><div class="dish">${o.d}</div><div class="oname">${o.who}</div></div></div><div class="needs">${needs}</div><button type="button" class="serve${ready?' ready':''}">${ready?'Serve':'Waiting'}</button>`;
     d.querySelector('.serve').onclick=()=>serve(i,d);
     box.appendChild(d);
   });
@@ -608,17 +658,17 @@ function serve(k,el){
   taken.forEach(i=>S.cells[i]=null);
   const now=Date.now();S.combo=(now-(S.lastServe||0)<15000)?(S.combo||1)+1:1;S.lastServe=now;S.served=(S.served||0)+1;if(!S.duel&&S.served%CRATE_EVERY===0)crateArrives();
   const base=o.n.reduce((s,t)=>s+(t+1)*(t+1)*3,5),bonus=S.combo>1?Math.round(base*.25*(S.combo-1)):0,pay=base+bonus,xp=o.n.reduce((s,t)=>s+t+2,0);
-  sfx.serve();buzz(25);el.classList.add('happy');el.querySelector('.face').insertAdjacentHTML('beforeend','<span class="mood">❤️</span>');
+  sfx.serve();buzz(25);el.classList.add('happy');o.happy=true;el.querySelector('.face').innerHTML=personSVG(o.who,'happy')+'<span class="mood">❤️</span>';el.dataset.mood='happy';
   el.insertAdjacentHTML('beforeend',`<div class="bubble">${pick(THANKS)}</div>`);
   if(S.combo>1){const c=document.createElement('div');c.className='combo';c.textContent=`Combo ×${S.combo}! +${bonus}`;$('app').appendChild(c);setTimeout(()=>c.remove(),1150);[0,.08,.16].forEach((d,i)=>tone(880*(1+i*.25)*(1+S.combo*.05),.15,'triangle',.14,d))}
   plus(el,'+'+pay);sel=null;renderBoard();const st=S;
   if(st.duel){st.coins+=pay;renderTop();pushScore();flyCoins(el,Math.min(10,2+Math.floor(pay/12)),()=>{});
-    setTimeout(()=>{if(S!==st)return;const sv=S;S=st;S.orders[k]=newOrder();S=sv;render()},700);setTip(S.combo>1?'Combo! Keep serving.':`${S.served} served. Keep going!`);return}
+    setTimeout(()=>{if(S!==st)return;const sv=S;S=st;nextCustomer(k);S=sv;render()},700);setTip(S.combo>1?'Combo! Keep serving.':`${S.served} served. Keep going!`);return}
   flyCoins(el,Math.min(10,2+Math.floor(pay/12)),()=>{st.coins+=pay;if(S===st){renderTop();save()}});
   flyStar(el,o.n.length);
   if(S.guide===2){S.guide=3;guide();setTimeout(()=>{toast('<b>You\'ve got it!</b>Keep matching and serving. Five stars open a gift chest.',3600);setTimeout(daily,4000)},1200)}
   S.xp+=xp;
-  setTimeout(()=>{if(S!==st)return;S.orders[k]=newOrder();levelCheck();render()},1100);
+  setTimeout(()=>{if(S!==st)return;el.classList.add('leave');setTimeout(()=>{if(S!==st)return;nextCustomer(k);levelCheck();render()},320)},800);
   setTip(S.combo>1?`Combo! Serve again within 15 seconds to keep it going.`:`${o.who} loved the ${o.d}. ${S.served} customers served.`);
 }
 function levelCheck(){
@@ -639,7 +689,7 @@ function tick(){
   if(S.energy<EMAX){const gained=Math.floor((Date.now()-S.eAt)/EREGEN);if(gained>0){S.energy=Math.min(EMAX,S.energy+gained);S.eAt+=gained*EREGEN;renderTop();save()}
     const left=Math.ceil((EREGEN-(Date.now()-S.eAt))/1000);$('etimer').textContent=S.energy<EMAX?` ${left}s`:''}else $('etimer').textContent='';
 }
-setInterval(tick,1000);tick();
+setInterval(()=>{tick();updateMoods()},1000);tick();
 
 /* ---------- daily gift ---------- */
 function today(){return new Date().toISOString().slice(0,10)}
