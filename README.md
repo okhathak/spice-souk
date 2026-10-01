@@ -31,3 +31,7 @@ Every 4 customers served, a spice crate arrives (the crate button pulses beside 
 ## Play online
 
 https://okhathak.github.io/spice-souk/ (GitHub Pages, served from `main`). Solo play works there; live duels need the game opened inside claude.ai.
+
+## Challenge a friend (added 2026-10-01)
+
+Tap **Duel → Play a challenge round**. After 90 seconds, put your name in and tap **Challenge a friend**: it shares (or copies) a link like `?c=<seed>-<score>-<name>`. The friend gets the same tray and the same customers, sees your score to beat, and can send theirs back. No account and no server; it works on GitHub Pages.

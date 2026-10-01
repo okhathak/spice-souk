@@ -134,6 +134,8 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .hand{position:fixed;z-index:40;font-size:34px;pointer-events:none;transform:translate(-50%,-100%);animation:poke .9s ease-in-out infinite;filter:drop-shadow(0 3px 2px rgba(0,0,0,.45));transition:left .25s,top .25s}
 .hand[hidden]{display:none}
+.chal{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:6px}.chal .field{width:100%}.chal small{min-height:16px;font-size:12px;text-align:center;overflow-wrap:anywhere}
+.chsteps{margin:6px 0 10px;display:flex;flex-direction:column;gap:6px}.chsteps p{font-size:15px!important}
 .hand.slide{animation:poke .9s ease-in-out infinite,slide 1.6s ease-in-out infinite}
 @keyframes slide{0%,18%{translate:0 0}62%,100%{translate:var(--dx,0) var(--dy,0)}}
 .flyer{position:fixed;width:74px;height:84px;pointer-events:none;z-index:45;transform:translate(-50%,-55%);transition:left .2s cubic-bezier(.4,0,.2,1),top .2s cubic-bezier(.4,0,.2,1),transform .2s}
@@ -167,9 +169,9 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .adbox[hidden]{display:none!important}
 .adbox div{font-size:15px;opacity:.7;margin-top:6px;font-family:var(--body)}
 .intro .steps{display:grid;gap:10px;margin:8px 0 16px}
-.intro .steps div{display:flex;gap:10px;align-items:center;background:#f6e6c8;border-radius:14px;padding:10px}
-.intro .steps span{width:28px;height:28px;border-radius:50%;background:#4a2412;color:var(--cream);display:grid;place-items:center;font-family:var(--display);font-weight:700;flex:none}
-.intro .steps p{margin:0;font-size:16px;line-height:1.35}
+.intro .steps div,.chsteps div{display:flex;gap:10px;align-items:center;background:#f6e6c8;border-radius:14px;padding:10px}
+.intro .steps span,.chsteps span{width:28px;height:28px;border-radius:50%;background:#4a2412;color:var(--cream);display:grid;place-items:center;font-family:var(--display);font-weight:700;flex:none}
+.intro .steps p,.chsteps p{margin:0;font-size:16px;line-height:1.35}
 
 .duelhud{display:none;flex-direction:column;gap:4px;padding:6px 14px 0}
 body.duel .duelhud{display:flex}
@@ -454,7 +456,7 @@ function shake(){const a=$('app');a.classList.remove('shake');void a.offsetWidth
 
 /* ---------- render ---------- */
 function renderTop(){
-  if(S.duel){$('coins').textContent=S.coins;$('energy').textContent=clock(duelLeft());$('etimer').textContent='';$('lvl').textContent=duel&&duel.code?'Code '+duel.code:'Practice';$('soukName').textContent='Souk duel';$('xp').style.width=(duelLeft()/DUEL_S*100)+'%';$('sack').classList.remove('empty');return}
+  if(S.duel){$('coins').textContent=S.coins;$('energy').textContent=clock(duelLeft());$('etimer').textContent='';$('lvl').textContent=duel&&duel.code?'Code '+duel.code:duel&&duel.challenge?'Beat '+duel.challenge.from+' · '+duel.challenge.score:'Challenge round';$('soukName').textContent='Souk duel';$('xp').style.width=(duelLeft()/DUEL_S*100)+'%';$('sack').classList.remove('empty');return}
   $('coins').textContent=S.coins;$('energy').textContent=S.energy;
   $('lvl').textContent='Level '+S.level;$('xp').style.width=Math.min(100,S.xp/xpNeed()*100)+'%';
   const k=soukIdx();$('soukName').textContent=SOUKS[k].n;document.body.dataset.souk=k;
@@ -696,7 +698,9 @@ function colorOf(k){let h=0;for(const c of String(k))h=(h*31+c.charCodeAt(0))|0;
 function hostPeer(){if(!droom)return null;const hs=droom.peers().filter(p=>p.presence&&p.presence.host).sort((a,b)=>a.peer<b.peer?-1:1);return hs[0]||null}
 function amHost(){const h=hostPeer();return !!(h&&h.sameTab)}
 function players(){ // everyone in this match, with scores
-  if(!droom||!duel||!duel.go)return [{peer:'me',me:true,nick:myNick(),pts:S.duel?S.coins:(duel&&duel.final)||0,served:S.served||0}];
+  if(!droom||!duel||!duel.go){const me={peer:'me',me:true,nick:myNick(),pts:S.duel?S.coins:(duel&&duel.final)||0,served:S.served||0};
+    if(duel&&duel.challenge){const c=duel.challenge;return [me,{peer:'rival',me:false,nick:c.from,pts:c.score,served:0}].sort((a,b)=>b.pts-a.pts)}
+    return [me]}
   return droom.peers().filter(p=>p.presence&&p.presence.go===duel.go).map(p=>({peer:p.peer,me:p.sameTab,nick:String(p.presence.nick||'Player').slice(0,20),pts:+p.presence.pts||0,served:+p.presence.served||0,fin:!!p.presence.fin}))
     .sort((a,b)=>b.pts-a.pts||(a.peer<b.peer?-1:1));
 }
@@ -737,19 +741,52 @@ function endMatch(){
   setTimeout(()=>{ // give the last scores a moment to arrive
     const ps=players();ps.forEach(p=>{if(p.me)p.pts=D.coins});ps.sort((a,b)=>b.pts-a.pts);
     S=MAIN;MAIN=null;document.body.classList.remove('duel','locked');$('countdown').hidden=true;
+    if(duel&&duel.challenge){challengeResult(D);return}
     const solo=ps.length===1,won=!solo&&ps[0].pts===D.coins;
     const prize=solo?10:won?80:20;S.coins+=prize;const best=D.coins>(S.duelBest||0);if(best)S.duelBest=D.coins;
     render();renderHud();
     const medals=['🥇','🥈','🥉'];
-    const list=solo?[`<span class="coin"></span>${D.coins} coins in 90 seconds`,best?'A new personal best!':`Your best is ${S.duelBest}`,`<span class="coin"></span>+${prize} coins for your stall`]
+    const list=solo?[`<span class="coin"></span>${D.coins} coins in 90 seconds`,best?'A new personal best!':`Your best is ${S.duelBest}`,`<span class="coin"></span>+${prize} coins for your stall`].concat(duel&&duel.seed!=null&&!droom?[shareBlock(duel.seed,D.coins,'Challenge a friend')]:[])
       :ps.slice(0,6).map((p,i)=>`<div class="rank"><span class="medal">${medals[i]||i+1}</span><b>${esc(p.me?'You':p.nick)}</b>${p.pts}</div>`).concat([`<span class="coin"></span>+${prize} coins for your stall`]);
     celebrate({art:won||solo?'<div style="font-size:72px;line-height:1">🏆</div>':'<div style="font-size:72px;line-height:1">🌶️</div>',
-      title:solo?'Practice over':won?'You win the duel!':`You came ${ordinal(ps.findIndex(p=>p.me)+1)}`,
+      title:solo?'Round over':won?'You win the duel!':`You came ${ordinal(ps.findIndex(p=>p.me)+1)}`,
       text:solo?`You served ${D.served} customers.`:won?`${D.served} customers served. The souk is yours.`:'So close. Ask for a rematch!',
       list,btn:droom?'Back to the duel':'Back to my stall'});
     duel.after=true;
   },1800);
 }
+/* ---------- challenge links: no server, no account ----------
+   The round is built from a seed, so the same link gives everyone the same tray and the same customers.
+   ?c=<seed>-<score>-<name>  — the score is the one to beat. */
+let chal=null;
+function chalLink(seed,score,name){return location.origin+location.pathname+'?c='+seed+'-'+score+'-'+encodeURIComponent(String(name||'A friend').slice(0,16))}
+function shareBlock(seed,score,label){chal={seed,score};const n=esc((MAIN||S).nick&&(MAIN||S).nick!=='Player'?(MAIN||S).nick:'');
+  return `<div class="chal"><input class="field" id="chName" maxlength="16" placeholder="Your name" value="${n}" aria-label="Your name"><button class="btn warm dfull" type="button" data-share>${label}</button><small id="chMsg"></small></div>`}
+async function shareChallenge(){if(!chal)return;const nm=(($('chName')&&$('chName').value.trim())||'A friend').slice(0,16);S.nick=nm;save();
+  const url=chalLink(chal.seed,chal.score,nm),text=`${nm} scored ${chal.score} coins in Spice Souk. Same tray, same customers. Can you beat it?`;
+  try{if(navigator.share){await navigator.share({title:'Spice Souk challenge',text,url});return}}catch(e){if(e&&e.name==='AbortError')return}
+  try{await navigator.clipboard.writeText(text+' '+url);$('chMsg').textContent='Link copied. Paste it to a friend.'}catch(e){$('chMsg').textContent=url}}
+$('rwList').addEventListener('click',e=>{if(e.target.closest('[data-share]'))shareChallenge()});
+function challengeResult(D){const c=duel.challenge,mine=D.coins,won=mine>c.score,tie=mine===c.score;
+  const prize=won?80:20;S.coins+=prize;if(mine>(S.duelBest||0))S.duelBest=mine;render();renderHud();
+  celebrate({art:`<div style="font-size:72px;line-height:1">${won?'🏆':tie?'🤝':'🌶️'}</div>`,
+    title:won?`You beat ${c.from}!`:tie?`A draw with ${c.from}`:`${c.from} wins this time`,
+    text:won?`${mine} coins against ${c.score}. Send it back and see if they can beat you.`:tie?`You both made ${mine} coins.`:`${mine} coins against ${c.score}. Play the same round again?`,
+    list:[`<div class="rank"><span class="medal">${won||tie?'🥇':'🥈'}</span><b>You</b>${mine}</div>`,`<div class="rank"><span class="medal">${won?'🥈':'🥇'}</span><b>${esc(c.from)}</b>${c.score}</div>`,
+      `<span class="coin"></span>+${prize} coins for your stall`,shareBlock(c.seed,mine,won?'Send it back':'Challenge them back')],
+    btn:won?'Back to my stall':'Play this round again'});
+  duel.after=true;duel.retry=won?null:{...c}}
+function playChallenge(c){audio();$('duelSheet').hidden=true;duel={seed:c.seed,challenge:c};beginMatch(c.seed,Date.now()+COUNT_MS,null)}
+function readChallenge(){const m=/^(\d{1,10})-(\d{1,6})-(.{0,60})$/.exec(new URLSearchParams(location.search).get('c')||'');if(!m)return null;
+  let from='A friend';try{from=decodeURIComponent(m[3]).replace(/[<>]/g,'').trim().slice(0,16)||from}catch(e){}
+  const seed=+m[1];if(!(seed>=0&&seed<2**31))return null;return{seed,score:+m[2],from}}
+function showChallenge(c){S.intro=true;if(S.guide==null||S.guide<3)S.guide=3;$('intro').hidden=true;save();
+  $('duelBody').innerHTML=`<div class="dnote" style="text-align:center;margin-bottom:0"><b>${esc(c.from)}</b> challenges you</div><div class="dcode">${c.score}</div>
+    <p class="dnote" style="text-align:center">coins in 90 seconds. You get the same tray and the same customers.</p>
+    <div class="steps chsteps"><div><span>1</span><p>Tap <b>Get spice</b>.</p></div><div><span>2</span><p>Drag two of the same together.</p></div><div><span>3</span><p><b>Serve</b> customers. Most coins wins.</p></div></div>
+    <button class="btn warm dfull" id="acceptBtn" type="button">Accept the challenge</button>`;
+  $('acceptBtn').onclick=()=>playChallenge(c);
+  $('duelSheet').hidden=false;try{history.replaceState(null,'',location.pathname)}catch(e){}}
 function ordinal(n){return n+(n%10===1&&n!==11?'st':n%10===2&&n!==12?'nd':n%10===3&&n!==13?'rd':'th')}
 
 /* rooms */
@@ -785,7 +822,7 @@ async function leaveDuel(){if(unPeers){unPeers();unPeers=null}if(droom){try{awai
 let dmsg='';
 function renderDuelSheet(){
   const b=$('duelBody');if(!b)return;const nick=esc(myNick());
-  if(!room){b.innerHTML=`<p class="dnote">Live duels work when you and your friends open this game in Claude. Share the game with them there, then everyone taps Duel.</p><button class="btn warm dfull" id="pracBtn" type="button">Practise 90 seconds alone</button>`;$('pracBtn').onclick=practice;return}
+  if(!room){b.innerHTML=`<p class="dnote"><b>Challenge a friend.</b> Play a 90-second round, then send them a link. They play the exact same round and try to beat your score.</p><button class="btn warm dfull" id="pracBtn" type="button">Play a challenge round</button>`;$('pracBtn').onclick=practice;return}
   if(!droom){
     b.innerHTML=`<label class="dlabel" for="nickIn">Your name in the duel</label><input class="field" id="nickIn" maxlength="20" value="${nick}" autocomplete="nickname">
       <button class="btn warm dfull" id="hostBtn" type="button">Start a duel</button>
@@ -810,9 +847,10 @@ function renderDuelSheet(){
   if(host)$('goBtn').onclick=()=>{audio();dmsg='';startMatch()};
   $('leaveBtn').onclick=leaveDuel;
 }
-function practice(){audio();beginMatch(Math.floor(Math.random()*2**31),Date.now()+COUNT_MS,null)}
+function practice(){audio();const seed=Math.floor(Math.random()*2**31);duel={seed};beginMatch(seed,Date.now()+COUNT_MS,null)}
 $('duelBtn').onclick=()=>{renderDuelSheet();openSheet('duelSheet')};
-const _rw=$('rwBtn').onclick;$('rwBtn').onclick=()=>{_rw();if(duel&&duel.after){duel.after=false;if(droom)setTimeout(()=>{renderDuelSheet();openSheet('duelSheet')},300)}};
+const _rw=$('rwBtn').onclick;$('rwBtn').onclick=()=>{_rw();if(duel&&duel.after&&duel.retry){const c=duel.retry;duel.after=false;setTimeout(()=>playChallenge(c),300);return}if(duel&&duel.after){duel.after=false;if(droom)setTimeout(()=>{renderDuelSheet();openSheet('duelSheet')},300)}};
+{const c=readChallenge();if(c)setTimeout(()=>showChallenge(c),300)}
 (async()=>{try{if(window.claude&&typeof window.claude.use==='function'){room=await window.claude.use('room');
   if(!S.nick){const u=await window.claude.use('user');if(u){const me=await u.me();if(me&&me.name){S.nick=me.name.split(' ')[0].slice(0,20);save()}}}}}catch(e){room=null}
   if(!$('duelSheet').hidden)renderDuelSheet()})();
