@@ -163,6 +163,12 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .say.cross{background:#ffe1d6;color:#8a1f12;font-size:13.5px}.say.cross:after{border-top-color:#ffe1d6}
 .say.line{max-width:140px;font-size:12px}.say.line:after{bottom:auto;top:-6px;border-top:0;border-bottom:6px solid #fff}
 .qp{position:relative}
+.queue.fighting{cursor:pointer;background:rgba(224,87,79,.22);border-radius:16px;padding:4px 8px;margin:-4px -8px;box-shadow:0 0 0 2px rgba(255,140,120,.6) inset;min-height:44px}
+.queue.fighting .qlabel{color:#ffd0c4;font-size:13px;animation:ready 1s infinite}
+.qp.brawl{opacity:1!important;animation:brawl .35s ease-in-out infinite;z-index:2}.qp.brawl.r{animation-delay:-.17s}
+.qp.brawl svg{box-shadow:0 0 0 2px #e0574f;border-radius:50%}
+.pow{position:absolute;right:-14px;top:-10px;font-size:20px;animation:pop .5s cubic-bezier(.2,1.6,.4,1) infinite alternate;pointer-events:none}
+@keyframes brawl{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(3px) rotate(8deg)}75%{transform:translateX(-3px) rotate(-8deg)}}
 @keyframes say{0%{opacity:0;translate:0 6px;scale:.8}8%{opacity:1;translate:0 0;scale:1.05}12%{scale:1}85%{opacity:1}100%{opacity:0;translate:0 -4px}}
 .restore{display:flex;align-items:center;gap:4px;min-height:34px;padding:0 10px;border-radius:12px;background:rgba(0,0,0,.3);color:var(--cream);font:700 13px var(--body);white-space:nowrap}
 .restore svg{width:16px;height:16px}.restore.can{background:linear-gradient(#ffd66b,#f0a52a);color:#4a2412;animation:chest 1.6s infinite}
@@ -538,13 +544,13 @@ function canServe(o){const c=counts(),need={};o.n.forEach(t=>need[t]=(need[t]||0
 function newOrder(){
   const mt=maxTier(),taken=S.orders.map(o=>o&&o.d);
   if(S.duel){const dp=DISHES.filter(x=>x.n.every(t=>t<=mt));let x,g=0;do{x=dp[Math.floor(S.rng()*dp.length)]}while(taken.includes(x.d)&&++g<20);
-    const names=S.orders.concat(S.queue||[]).map(o=>o&&o.who),people=SOUKS[0].people.filter(p=>!names.includes(p));return {d:x.d,n:x.n.slice(),who:pick(people.length?people:SOUKS[0].people),col:pick(FACES),fresh:true}}
+    const names=S.orders.concat(S.queue||[]).map(o=>o&&o.who).concat(S.away||[]),people=SOUKS[0].people.filter(p=>!names.includes(p));return {d:x.d,n:x.n.slice(),who:freeName(people,SOUKS[0].people),col:pick(FACES),fresh:true}}
   let pool=DISHES.filter(x=>x.n.every(t=>t<=mt)&&!taken.includes(x.d));
   // lean toward harder dishes as you level
   pool.sort(()=>Math.random()-.5);if(Math.random()<.5)pool.sort((a,b)=>Math.max(...b.n)-Math.max(...a.n));
   const x=pool[Math.floor(Math.random()*Math.min(pool.length,4))]||DISHES[1];
-  const names=S.orders.concat(S.queue||[]).map(o=>o&&o.who),people=SOUKS[soukIdx()].people.filter(p=>!names.includes(p));
-  return {d:x.d,n:x.n.slice(),who:pick(people.length?people:SOUKS[soukIdx()].people),col:pick(FACES),fresh:true};
+  const names=S.orders.concat(S.queue||[]).map(o=>o&&o.who).concat(S.away||[]),people=SOUKS[soukIdx()].people.filter(p=>!names.includes(p));
+  return {d:x.d,n:x.n.slice(),who:freeName(people,SOUKS[soukIdx()].people),col:pick(FACES),fresh:true};
 }
 while(S.orders.length<3)S.orders.push(newOrder());
 
@@ -568,10 +574,14 @@ function renderTop(){
   const k=soukIdx();$('soukName').textContent=SOUKS[k].n;document.body.dataset.souk=k;
   $('sack').classList.toggle('empty',S.energy<=0);
 }
+function freeName(free,all){if(free.length)return pick(free);const busy=S.orders.concat(S.queue||[]).map(o=>o&&o.who);const b=all.filter(p=>!busy.includes(p));return pick(b.length?b:all)}
 function fillQueue(){if(!S.queue)S.queue=[];while(S.queue.length<3){const o=newOrder();o.fresh=false;S.queue.push(o)}}
 function nextCustomer(k){fillQueue();const o=S.queue.shift();o.fresh=true;o.t=Date.now();if(!S.duel&&S.level>=3&&!S.orders.some(x=>x&&x.vip)&&Math.random()<.15)o.vip=true;S.orders[k]=o;fillQueue();return o}
 function renderQueue(){const q=$('queue');if(!q)return;fillQueue();
-  q.innerHTML=`<span class="qlabel">In line</span>`+S.queue.map((o,i)=>`<div class="qp" style="--i:${i}" title="${esc(o.who)}">${personSVG(o.who,'calm','rgba(255,243,220,.18)')}</div>`).join('')}
+  const f=fight;q.classList.toggle('fighting',!!f);
+  q.innerHTML=`<span class="qlabel">${f?'Tap!':'In line'}</span>`+S.queue.map((o,i)=>{const in_=f&&(i===f.a||i===f.b);
+    return `<div class="qp${in_?' brawl'+(i===f.a?' l':' r'):''}" style="--i:${i}" title="${esc(o.who)}">${personSVG(o.who,in_?'cross':'calm','rgba(255,243,220,.18)')}${in_&&i===f.a?'<span class="pow">💥</span>':''}</div>`}).join('')}
+document.addEventListener('click',e=>{if(fight&&e.target.closest('#queue'))calmFight()});
 /* customers talk: Emirati banter that gets louder the longer they wait */
 const SAY={
  calm:['Salam alaikum!','Shlonak? All good?','Habibi, take your time… but not too much','Smells like my teta’s kitchen!','Mashallah, nice stall!','One plate please, inshallah','I came all the way from Ajman!','Is this the famous stall?'],
@@ -579,8 +589,21 @@ const SAY={
  cross:['Yallaaa! 😤','Hurry up, habibi!','I was in the queue since Ramadan!','Wallah, I’ll go to the next stall!','Khalas, I’m starving! 😩','Even Salik is faster than this!','I parked on the double yellow line!','My mother is calling me! 📞','It’s 48 degrees outside, yalla!','Faster than Sheikh Zayed Road traffic, please!'],
  vip:['Do you know who I am? 😎','My Lambo is double parked','Habibi, VIP means fast!','Gold service please ✨'],
  line:['Yalla, my turn?','Ana awal wahid! I was first!','Excuse me, I was here before him','Haram, it’s so hot!','Save me a plate!','Is this the line for shawarma?','Wallah this queue…','Who’s next? Me? Inshallah']};
-let lastSay=0,lastLine=0;
-function speak(el,txt,cls){if(!el)return;const line=/line/.test(cls||''),key=line?'line':'order'+(cls||'').match(/s(\d)/)?.[1];
+let lastSay=0,lastLine=0,fight=null,nextFight=Date.now()+45000;
+const FIGHT=[['I was here first!','No, I was!'],['Wallah, you cut the line!','Ya akhi, I was standing here!'],['This is MY shawarma!','Says who?!'],['My cousin saved my spot!','Your cousin left an hour ago!'],['Move back, habibi!','You move back!'],['Who are you calling slow?!','You, ya Abu Shanab!']];
+const CALM=['Khalas, khalas…','Sorry, habibi','OK, you go first','Allah yesamhak','Fine, fine…'];
+function startFight(){if(S.duel||!S.queue||S.queue.length<2)return;const q=$('queue');if(!q||!q.offsetParent)return;
+  const a=Math.floor(Math.random()*(S.queue.length-1));fight={a,b:a+1,start:Date.now(),lines:pick(FIGHT),said:0};renderQueue();sfx.no();buzz(30);
+  setTip('<b>A fight in the line!</b><br>Tap them to calm them down.')}
+function fightTick(){if(!fight)return;const qs=document.querySelectorAll('#queue .qp');
+  if(fight.said<4&&Date.now()-fight.start>fight.said*2200){const who=fight.said%2?fight.b:fight.a;speak(qs[who],fight.lines[fight.said%2],'line cross q'+who);lastLine=Date.now();fight.said++}
+  if(Date.now()-fight.start>11000){const A=S.queue[fight.a],B=S.queue[fight.b];S.queue.splice(fight.a,2);S.away=[A.who,B.who];setTimeout(()=>{S.away=[]},90000);fight=null;nextFight=Date.now()+60000+Math.random()*40000;fillQueue();
+    S.orders.forEach(o=>{if(o&&o.t)o.t-=8000});sfx.no();render();setTip(`<b>${esc(A.who)} and ${esc(B.who)} stormed off.</b><br>All that shouting upset your customers.`)}}
+function calmFight(){if(!fight)return;const qs=document.querySelectorAll('#queue .qp');const f=fight;fight=null;nextFight=Date.now()+60000+Math.random()*40000;
+  lastLine=Date.now()+5000;speak(qs[f.a],pick(CALM),'line q'+f.a);setTimeout(()=>{const q2=document.querySelectorAll('#queue .qp');speak(q2[f.b],pick(CALM),'line q'+f.b)},700);
+  const bonus=15+S.level*3;flyCoins($('queue'),4,()=>{S.coins+=bonus;renderTop();save()});tone(784,.12,'triangle',.12);tone(1046,.16,'triangle',.12,.1);
+  renderQueue();setTip(`<b>Peace in the souk! +${bonus} coins</b><br>A wise stall keeper keeps the line calm.`)}
+function speak(el,txt,cls){if(!el)return;const line=/line/.test(cls||''),key=line?'line'+((cls||'').match(/q(\d)/)?.[1]||''):'order'+(cls||'').match(/s(\d)/)?.[1];
   document.querySelectorAll('.say[data-k="'+key+'"]').forEach(x=>x.remove());
   const r=el.getBoundingClientRect(),b=document.createElement('div');b.className='say '+(cls||'');b.dataset.k=key;b.textContent=txt;$('fx').appendChild(b);
   const w=b.offsetWidth,h=b.offsetHeight,cx=r.left+r.width/2,x=Math.max(8,Math.min(innerWidth-8-w,cx-w/2));
@@ -591,7 +614,7 @@ function chatter(){if(document.hidden||[...document.querySelectorAll('.sheet,.ce
     if(ks.length){const angry=ks.filter(k=>moodOf(S.orders[k])==='cross');const k=angry.length&&Math.random()<.7?pick(angry):pick(ks);const o=S.orders[k],m=moodOf(o);
       speak(els[k],pick(o.vip&&Math.random()<.5?SAY.vip:SAY[m]||SAY.calm),'s'+k+' '+m);lastSay=now;if(m==='cross')tone(330,.08,'square',.04)}}
   if(now-lastLine>7000&&Math.random()<.3){const q=document.querySelectorAll('#queue .qp');if(q.length){speak(pick([...q]),pick(SAY.line),'line');lastLine=now}}}
-function updateMoods(){document.querySelectorAll('#orders .order').forEach((d,i)=>{const o=S.orders[i];if(!o)return;const m=moodOf(o);if(d.dataset.mood!==m){if(m==='cross'&&d.dataset.mood==='wait'&&!document.hidden){speak(d,pick(SAY.cross),'s'+i+' cross');lastSay=Date.now()}d.dataset.mood=m;const f=d.querySelector('.face');if(f)f.innerHTML=personSVG(o.who,m)+(o.happy?'<span class="mood">❤️</span>':'')}})}
+function updateMoods(){if(fight&&paused())fight.start+=1000;else fightTick();if(!fight&&Date.now()>nextFight&&!paused()&&Math.random()<.25)startFight();document.querySelectorAll('#orders .order').forEach((d,i)=>{const o=S.orders[i];if(!o)return;const m=moodOf(o);if(d.dataset.mood!==m){if(m==='cross'&&d.dataset.mood==='wait'&&!document.hidden){speak(d,pick(SAY.cross),'s'+i+' cross');lastSay=Date.now()}d.dataset.mood=m;const f=d.querySelector('.face');if(f)f.innerHTML=personSVG(o.who,m)+(o.happy?'<span class="mood">❤️</span>':'')}})}
 function renderOrders(){renderQueue();
   const c=counts();const box=$('orders');box.innerHTML='';
   S.orders.forEach((o,i)=>{
