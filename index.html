@@ -160,6 +160,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .hand[hidden]{display:none}
 .say{position:fixed;background:#fff;color:#3a1c0e;border-radius:14px;padding:6px 10px;font:800 12.5px var(--body);line-height:1.25;width:max-content;max-width:150px;text-align:center;box-shadow:0 6px 14px rgba(0,0,0,.35);z-index:6;pointer-events:none;animation:say 3.2s forwards}
 .say:after{content:"";position:absolute;left:var(--tail,50%);bottom:-6px;margin-left:-6px;border:6px solid transparent;border-top-color:#fff;border-bottom:0}
+.say span{display:block}.say small{display:block;font:700 10.5px var(--body);opacity:.65;margin-top:2px;font-style:italic}
 .say.cross{background:#ffe1d6;color:#8a1f12;font-size:13.5px}.say.cross:after{border-top-color:#ffe1d6}
 .say.line{max-width:140px;font-size:12px}.say.line:after{bottom:auto;top:-6px;border-top:0;border-bottom:6px solid #fff}
 .qp{position:relative}
@@ -586,30 +587,38 @@ document.addEventListener('click',e=>{if(fight&&e.target.closest('#queue'))calmF
 const SAY={
  calm:['Salam alaikum!','Shlonak? All good?','Habibi, take your time… but not too much','Smells like my teta’s kitchen!','Mashallah, nice stall!','One plate please, inshallah','I came all the way from Ajman!','Is this the famous stall?'],
  wait:['Yalla habibi…','Shu fi? Still waiting…','Wallah, I’m hungry','Bas shway faster?','My karak is getting cold!','Is the chef on Dubai time?','Inshallah today?','I left my car running…'],
- cross:['Yallaaa! 😤','Hurry up, habibi!','I was in the queue since Ramadan!','Wallah, I’ll go to the next stall!','Khalas, I’m starving! 😩','Even Salik is faster than this!','I parked on the double yellow line!','My mother is calling me! 📞','It’s 48 degrees outside, yalla!','Faster than Sheikh Zayed Road traffic, please!'],
+ cross:['Yallaaa! 😤','Arre bhai, kitna time? 😩','Ay, ang tagal! 😤','Ну давай уже! 😤','Hurry up, habibi!','I was in the queue since Ramadan!','Wallah, I’ll go to the next stall!','Khalas, I’m starving! 😩','Even Salik is faster than this!','I parked on the double yellow line!','My mother is calling me! 📞','It’s 48 degrees outside, yalla!','Faster than Sheikh Zayed Road traffic, please!'],
  vip:['Do you know who I am? 😎','My Lambo is double parked','Habibi, VIP means fast!','Gold service please ✨'],
- line:['Yalla, my turn?','Ana awal wahid! I was first!','Excuse me, I was here before him','Haram, it’s so hot!','Save me a plate!','Is this the line for shawarma?','Wallah this queue…','Who’s next? Me? Inshallah']};
+ line:['Arre yaar, jaldi karo! (hurry up!)','Bilis, bilis! (quick, quick!)','Yalla, chalo chalo!','Vegam venam! (be quick!)','Yalla, my turn?','Ana awal wahid! I was first!','Excuse me, I was here before him','Haram, it’s so hot!','Save me a plate!','Is this the line for shawarma?','Wallah this queue…','Who’s next? Me? Inshallah']};
 let lastSay=0,lastLine=0,fight=null,nextFight=Date.now()+45000;
+const CLAIM=[['يا أخي، أنا أول واحد!','Brother, I was first!'],['Arre bhai, line mein aao!','Hey bro, get in the line!'],['Hoy! Ako ang nauna!','Hey! I was first!'],['Enthaa? Njan aadyam vannu!','What? I came first!'],
+ ['Эй, я первый стоял!','Hey, I was standing first!'],['آقا، نوبت منه!','Sir, it’s my turn!'],['Hé ! C’était mon tour !','Hey! It was my turn!'],['Sıra bende, kardeşim!','It’s my turn, brother!'],
+ ['Wallah, you cut the line!',''],['Main pehle aaya tha, yaar!','I came first, man!'],['Ana el awel, fahem?','I’m first, understand?'],['Excuse me, I was here since Ramadan!','']];
+const COMEBACK=[['Shu? Mish sahih!','What? Not true!'],['Chup kar, yaar!','Shut up, man!'],['Ay naku! Ang kulit mo!','Oh my! You’re so annoying!'],['Chumma irikku, machane!','Just stay quiet, bro!'],
+ ['Да ладно! Ни за что!','Come on! No way!'],['Boro baba!','Get lost, man!'],['N’importe quoi !','Nonsense!'],['Hadi ya, olmaz!','Come on, no way!'],
+ ['Ya akhi, I was standing here!',''],['Arre, tu kaun hai?!','Hey, who are you?!'],['Yalla, go back!',''],['Your cousin left an hour ago!','']];
 const FIGHT=[['I was here first!','No, I was!'],['Wallah, you cut the line!','Ya akhi, I was standing here!'],['This is MY shawarma!','Says who?!'],['My cousin saved my spot!','Your cousin left an hour ago!'],['Move back, habibi!','You move back!'],['Who are you calling slow?!','You, ya Abu Shanab!']];
-const CALM=['Khalas, khalas…','Sorry, habibi','OK, you go first','Allah yesamhak','Fine, fine…'];
+const CALM=[['Khalas, khalas…','OK, enough…'],['Theek hai, theek hai','OK, OK'],['Sige na nga…','Fine then…'],['Shari, shari','OK, OK'],['Ладно, ладно…','Fine, fine…'],['Tamam, tamam','OK, OK'],['Allah yesamhak','May God forgive you'],['D’accord, vas-y','OK, go ahead'],['Sorry, habibi','']];
 function startFight(){if(S.duel||!S.queue||S.queue.length<2)return;const q=$('queue');if(!q||!q.offsetParent)return;
-  const a=Math.floor(Math.random()*(S.queue.length-1));fight={a,b:a+1,start:Date.now(),lines:pick(FIGHT),said:0};renderQueue();sfx.no();buzz(30);
+  const a=Math.floor(Math.random()*(S.queue.length-1));const c1=pick(CLAIM);let r1=pick(COMEBACK),c2=pick(CLAIM),r2=pick(COMEBACK);let g=0;while(c2===c1&&g++<9)c2=pick(CLAIM);g=0;while(r2===r1&&g++<9)r2=pick(COMEBACK);
+  fight={a,b:a+1,start:Date.now(),lines:[c1,r1,c2,r2],said:0};renderQueue();sfx.no();buzz(30);
   setTip('<b>A fight in the line!</b><br>Tap them to calm them down.')}
 function fightTick(){if(!fight)return;const qs=document.querySelectorAll('#queue .qp');
-  if(fight.said<4&&Date.now()-fight.start>fight.said*2200){const who=fight.said%2?fight.b:fight.a;speak(qs[who],fight.lines[fight.said%2],'line cross q'+who);lastLine=Date.now();fight.said++}
+  if(fight.said<4&&Date.now()-fight.start>fight.said*2200){const who=fight.said%2?fight.b:fight.a;const L=fight.lines[fight.said];document.querySelectorAll('.say.line').forEach(x=>x.remove());speak(qs[who],L[0],'line cross q'+who,L[1]);lastLine=Date.now();fight.said++}
   if(Date.now()-fight.start>11000){const A=S.queue[fight.a],B=S.queue[fight.b];S.queue.splice(fight.a,2);S.away=[A.who,B.who];setTimeout(()=>{S.away=[]},90000);fight=null;nextFight=Date.now()+60000+Math.random()*40000;fillQueue();
     S.orders.forEach(o=>{if(o&&o.t)o.t-=8000});sfx.no();render();setTip(`<b>${esc(A.who)} and ${esc(B.who)} stormed off.</b><br>All that shouting upset your customers.`)}}
 function calmFight(){if(!fight)return;const qs=document.querySelectorAll('#queue .qp');const f=fight;fight=null;nextFight=Date.now()+60000+Math.random()*40000;
-  lastLine=Date.now()+5000;speak(qs[f.a],pick(CALM),'line q'+f.a);setTimeout(()=>{const q2=document.querySelectorAll('#queue .qp');speak(q2[f.b],pick(CALM),'line q'+f.b)},700);
+  lastLine=Date.now()+5000;document.querySelectorAll('.say.line').forEach(x=>x.remove());const k1=pick(CALM);let k2=pick(CALM);while(k2===k1)k2=pick(CALM);speak(qs[f.a],k1[0],'line q'+f.a,k1[1]);setTimeout(()=>{const q2=document.querySelectorAll('#queue .qp');speak(q2[f.b],k2[0],'line q'+f.b,k2[1])},700);
   const bonus=15+S.level*3;flyCoins($('queue'),4,()=>{S.coins+=bonus;renderTop();save()});tone(784,.12,'triangle',.12);tone(1046,.16,'triangle',.12,.1);
   renderQueue();setTip(`<b>Peace in the souk! +${bonus} coins</b><br>A wise stall keeper keeps the line calm.`)}
-function speak(el,txt,cls){if(!el)return;const line=/line/.test(cls||''),key=line?'line'+((cls||'').match(/q(\d)/)?.[1]||''):'order'+(cls||'').match(/s(\d)/)?.[1];
+function speak(el,txt,cls,gloss){if(!el)return;const line=/line/.test(cls||''),key=line?'line'+((cls||'').match(/q(\d)/)?.[1]||''):'order'+(cls||'').match(/s(\d)/)?.[1];
   document.querySelectorAll('.say[data-k="'+key+'"]').forEach(x=>x.remove());
-  const r=el.getBoundingClientRect(),b=document.createElement('div');b.className='say '+(cls||'');b.dataset.k=key;b.textContent=txt;$('fx').appendChild(b);
+  const r=el.getBoundingClientRect(),b=document.createElement('div');b.className='say '+(cls||'');b.dataset.k=key;const m=document.createElement('span');m.dir='auto';m.textContent=txt;b.appendChild(m);if(gloss){const g=document.createElement('small');g.textContent=gloss;b.appendChild(g)}$('fx').appendChild(b);
   const w=b.offsetWidth,h=b.offsetHeight,cx=r.left+r.width/2,x=Math.max(8,Math.min(innerWidth-8-w,cx-w/2));
   b.style.left=x+'px';b.style.top=(line?r.bottom+8:r.top-h-8)+'px';b.style.setProperty('--tail',(Math.max(14,Math.min(w-14,cx-x)))+'px');setTimeout(()=>b.remove(),3200)}
 function chatter(){if(document.hidden||[...document.querySelectorAll('.sheet,.celebrate')].some(x=>!x.hidden))return;const now=Date.now();
   const els=document.querySelectorAll('#orders .order');
+  if(fight)return;
   if(now-lastSay>4500&&Math.random()<.45){const ks=S.orders.map((o,k)=>k).filter(k=>S.orders[k]&&!S.orders[k].happy&&!S.orders[k].gone);
     if(ks.length){const angry=ks.filter(k=>moodOf(S.orders[k])==='cross');const k=angry.length&&Math.random()<.7?pick(angry):pick(ks);const o=S.orders[k],m=moodOf(o);
       speak(els[k],pick(o.vip&&Math.random()<.5?SAY.vip:SAY[m]||SAY.calm),'s'+k+' '+m);lastSay=now;if(m==='cross')tone(330,.08,'square',.04)}}
