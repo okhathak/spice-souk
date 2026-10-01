@@ -35,3 +35,9 @@ https://okhathak.github.io/spice-souk/ (GitHub Pages, served from `main`). Solo 
 ## Challenge a friend (added 2026-10-01)
 
 Tap **Duel → Play a challenge round**. After 90 seconds, put your name in and tap **Challenge a friend**: it shares (or copies) a link like `?c=<seed>-<score>-<name>`. The friend gets the same tray and the same customers, sees your score to beat, and can send theirs back. No account and no server; it works on GitHub Pages.
+
+## Purpose, stakes and daily goals (added 2026-10-01)
+
+- **Restore Jaddi Saeed's stall.** The hammer button (top right) opens the stall: 8 parts to restore with coins, each drawn on the stall, each with a line from Jaddi Saeed and a perk (customers wait longer, or tip more). Restore all 8 to travel on: Deira, then Marrakech, then Istanbul.
+- **Stakes.** Customers served while smiling tip 25% (more with perks); served while frowning they pay 25% less; left too long they walk out and the combo breaks. From level 3, an occasional VIP pays double but waits less. Patience pauses while a menu is open or the app is in the background.
+- **Daily goals.** The scroll shows three goals a day; finish all three for coins and energy, and a streak that grows the gift.

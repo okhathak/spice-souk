@@ -73,11 +73,11 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 @keyframes ready{50%{transform:scale(1.05)}}
 
 /* board */
-.tiprow{display:flex;align-items:center;gap:10px;padding:6px 12px;flex:none;min-height:56px}
-.tip{flex:1;min-width:0;font-size:13px;color:var(--cream);line-height:1.35;border-radius:12px;padding:4px 8px;transition:background .3s}
+.tiprow{display:flex;align-items:center;gap:7px;padding:6px 12px;flex:none;min-height:56px}
+.tip{flex:1;min-width:0;font-size:12.5px;color:var(--cream);line-height:1.35;border-radius:12px;padding:4px 8px;transition:background .3s}
 .tip.news{position:relative;z-index:40;background:#4a2a14;rgba(255,226,138,.16);box-shadow:inset 0 0 0 1px rgba(255,226,138,.35);animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
 .tip.news b{display:block;color:#ffe28a;font-size:14px}
-.chest{flex:none;width:70px;min-height:48px;border-radius:14px;background:rgba(0,0,0,.3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:3px 0;position:relative}
+.chest{flex:none;width:60px;min-height:48px;border-radius:14px;background:rgba(0,0,0,.3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:3px 0;position:relative}
 .chest svg{width:32px;height:26px}
 .chest small{font-family:var(--display);font-size:12px;font-weight:600;color:var(--muted)}
 .chest .meter{width:48px;height:5px;border-radius:5px;background:rgba(0,0,0,.4);overflow:hidden}
@@ -147,6 +147,24 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .hand{position:fixed;z-index:40;font-size:34px;pointer-events:none;transform:translate(-50%,-100%);animation:poke .9s ease-in-out infinite;filter:drop-shadow(0 3px 2px rgba(0,0,0,.45));transition:left .25s,top .25s}
 .hand[hidden]{display:none}
+.restore{display:flex;align-items:center;gap:4px;min-height:34px;padding:0 10px;border-radius:12px;background:rgba(0,0,0,.3);color:var(--cream);font:700 13px var(--body);white-space:nowrap}
+.restore svg{width:16px;height:16px}.restore.can{background:linear-gradient(#ffd66b,#f0a52a);color:#4a2412;animation:chest 1.6s infinite}
+.stgrand{display:flex;gap:12px;align-items:center;margin:4px 0 10px}.sta{width:58px;height:58px;flex:none}.sta svg{width:100%;height:100%}
+.stgrand p{margin:0;font-style:italic;font-size:15px;line-height:1.4;background:#f6e6c8;border-radius:14px;padding:10px 12px}
+.stprog{display:flex;align-items:center;gap:10px;margin-bottom:8px}.stprog .xpbar{flex:1}.stprog small{white-space:nowrap;font-weight:700}
+.stlist{display:flex;flex-direction:column;gap:6px;max-height:44vh;overflow:auto}
+.strow{display:flex;align-items:center;gap:10px;background:#f6e6c8;border-radius:14px;padding:6px 10px;min-height:52px;opacity:.55}
+.strow.done{opacity:1;background:#e2efd6}.strow.next{opacity:1;box-shadow:0 0 0 2px #f0a52a inset}
+.strow>div{flex:1;min-width:0}.strow b{display:block;font-size:15px}.strow small{font-size:12px;opacity:.8}
+.sti{width:34px;height:34px;flex:none}.sti svg{width:100%;height:100%}.strow .tick{color:#3e8a4a;font-weight:800;font-size:20px}
+.strow .btn{min-height:44px;padding:0 12px;display:flex;align-items:center;gap:4px}.strow .cost{display:flex;align-items:center;gap:3px;font-weight:700;font-size:13px}
+.order.vip{box-shadow:0 0 0 2px #e9b85a inset,0 0 14px rgba(255,200,90,.45)}
+.vipb{display:inline-block;background:#e9b85a;color:#4a2412;font:800 10px var(--body);padding:1px 5px;border-radius:6px;margin-right:4px;vertical-align:2px}
+.order.walkout{transition:transform .45s ease-in,opacity .45s;transform:translateX(-50px) rotate(-6deg);opacity:0}
+.chest.goal.ready{background:linear-gradient(#ffd66b,#f0a52a);color:#4a2412;animation:chest 1.2s infinite}
+.gllist{display:flex;flex-direction:column;gap:8px;margin:6px 0}
+.glrow{display:flex;align-items:center;gap:10px;background:#f6e6c8;border-radius:14px;padding:10px 12px}.glrow>div{flex:1}.glrow b{display:block;font-size:15px;margin-bottom:6px}
+.glrow span{font-weight:800;min-width:44px;text-align:right}.glrow.done{background:#e2efd6}.glrow .xpbar{background:rgba(0,0,0,.12)}
 .chal{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:6px}.chal .field{width:100%}.chal small{min-height:16px;font-size:12px;text-align:center;overflow-wrap:anywhere}
 .chsteps{margin:6px 0 10px;display:flex;flex-direction:column;gap:6px}.chsteps p{font-size:15px!important}
 .hand.slide{animation:poke .9s ease-in-out infinite,slide 1.6s ease-in-out infinite}
@@ -280,7 +298,7 @@ body.duel #crateBtn{display:none}
   <div class="lane"><div class="queue" id="queue" aria-label="Customers waiting in line"></div><div class="stall" id="stall" aria-label="Your stall decorations"></div></div>
   <div class="duelhud" id="duelHud" aria-live="polite"></div>
   <div class="orders" id="orders"></div>
-  <div class="tiprow"><button class="chest" id="chest" type="button" aria-label="Souk chest"><svg viewBox="0 0 32 28"><rect x="3" y="11" width="26" height="15" rx="2" fill="#8a4a1c" stroke="#3f1d0c" stroke-width="1.5"/><path d="M3 12 Q16 0 29 12Z" fill="#a85a22" stroke="#3f1d0c" stroke-width="1.5"/><rect x="3" y="15" width="26" height="3" fill="#e9b85a"/><rect x="14" y="13" width="4" height="7" rx="1" fill="#f4c04e" stroke="#7a4c10"/></svg><div class="meter"><i id="chestFill"></i></div><small id="chestTxt">0/5</small></button><button class="chest crate" id="crateBtn" type="button" aria-label="Spice crate, tap to sort it" hidden><span style="font-size:26px;line-height:1">📦</span><small>Sort!</small></button><div class="tip" id="tip">Tap <b>Get spice</b> to start.</div></div>
+  <div class="tiprow"><button class="chest" id="chest" type="button" aria-label="Souk chest"><svg viewBox="0 0 32 28"><rect x="3" y="11" width="26" height="15" rx="2" fill="#8a4a1c" stroke="#3f1d0c" stroke-width="1.5"/><path d="M3 12 Q16 0 29 12Z" fill="#a85a22" stroke="#3f1d0c" stroke-width="1.5"/><rect x="3" y="15" width="26" height="3" fill="#e9b85a"/><rect x="14" y="13" width="4" height="7" rx="1" fill="#f4c04e" stroke="#7a4c10"/></svg><div class="meter"><i id="chestFill"></i></div><small id="chestTxt">0/5</small></button><button class="chest crate" id="crateBtn" type="button" aria-label="Spice crate, tap to sort it" hidden><span style="font-size:26px;line-height:1">📦</span><small>Sort!</small></button><button class="chest goal" id="goalBtn" type="button" aria-label="Daily goals" hidden><span style="font-size:22px;line-height:1">📜</span><small id="goalTxt">0/3</small></button><div class="tip" id="tip">Tap <b>Get spice</b> to start.</div></div>
   <div class="boardwrap"><div class="board" id="board" aria-label="Spice tray"></div></div>
   <div class="bar">
     <button class="icon" id="bookBtn" type="button" aria-label="Spice book"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>Book</button>
@@ -318,7 +336,7 @@ body.duel #crateBtn{display:none}
 
   <div class="sheet intro" id="intro"><div class="card">
     <h2>Welcome to the souk</h2>
-    <p>You run a spice stall. Customers order dishes, and you make the spices they need.</p>
+    <p>Your grandfather’s spice stall has seen better days. Serve customers, earn coins, and restore it.</p>
     <div class="steps">
       <div><span>1</span><p>Tap <b>Get spice</b> to add a spice to your tray.</p></div>
       <div><span>2</span><p>Match <b>two of the same</b> to make a better one.</p></div>
@@ -341,6 +359,24 @@ body.duel #crateBtn{display:none}
     <div class="shoprow"><div><b>Sound</b><br><small>Music and effects</small></div><button class="btn" id="muteBtn" type="button" aria-label="Sound on"><svg style="width:20px;height:20px;vertical-align:-4px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path id="wave" d="M16 8a5 5 0 0 1 0 8"/></svg><span id="muteTxt">Sound</span></button></div>
     <div class="shoprow"><div><b>Start over</b><br><small>Wipes your stall and coins</small></div><button class="btn" id="resetBtn" type="button">Reset</button></div>
     <button class="btn" type="button" data-close style="width:100%;margin-top:10px">Close</button>
+  </div></div>
+
+  <div class="sheet" id="goalSheet" hidden><div class="card">
+    <h2>Today’s goals</h2>
+    <p class="dnote" id="glStreak"></p>
+    <div class="gllist" id="glList"></div>
+    <button class="btn warm dfull" id="glClaim" type="button">Collect your gift</button>
+    <button class="btn" type="button" data-close style="width:100%;margin-top:8px">Close</button>
+  </div></div>
+
+  <div class="sheet" id="stallSheet" hidden><div class="card">
+    <h2 id="stTitle">Saeed & Sons</h2>
+    <div class="stgrand"><div class="sta" id="stGrand"></div><p id="stSay"></p></div>
+    <div class="stprog"><div class="xpbar"><i id="stBar"></i></div><small id="stCount"></small></div>
+    <div class="stlist" id="stList"></div>
+    <p class="dnote" id="stNeed"></p>
+    <button class="btn warm dfull" id="travelBtn" type="button" hidden>Travel</button>
+    <button class="btn" type="button" data-close style="width:100%;margin-top:8px">Close</button>
   </div></div>
 
   <div class="sheet celebrate" id="reward" hidden><div class="card">
@@ -385,9 +421,16 @@ const LOOK={
  'Youssef':{w:'fez',sk:'#b07a52',cl:'#6b4a2a',beard:1},'Fatima':{w:'hijab',sk:'#c48f68',cl:'#5c6b2e',hc:'#8a9a3c'},'Karim':{w:'hair',sk:'#a87250',cl:'#3d5a80',hair:'#2a1b12',beard:1},
  'Salma':{w:'long',sk:'#d9a882',cl:'#a0527a',hair:'#3a2216'},'Omar':{w:'kufi',sk:'#9a6646',cl:'#e9e2d0',beard:1},'Leila':{w:'long',sk:'#e3b691',cl:'#3f8f8a',hair:'#1f140d'},
  'Mehmet':{w:'hair',sk:'#d6a37c',cl:'#4b5563',hair:'#33241a',moust:1},'Elif':{w:'long',sk:'#efc3a0',cl:'#c0643a',hair:'#6b3d1f'},'Can':{w:'hair',sk:'#e2b18c',cl:'#2f6f5e',hair:'#1c1310'},
- 'Zeynep':{w:'long',sk:'#ebbd98',cl:'#4f79a8',hair:'#2a1a12'},'Emre':{w:'hair',sk:'#d1a07a',cl:'#8a6a3a',hair:'#3b2a1e',beard:1},'Ayşe':{w:'hijab',sk:'#e6b994',cl:'#6b4e8a',hc:'#9b7bc0'}};
+ 'Zeynep':{w:'long',sk:'#ebbd98',cl:'#4f79a8',hair:'#2a1a12'},'Emre':{w:'hair',sk:'#d1a07a',cl:'#8a6a3a',hair:'#3b2a1e',beard:1},'Ayşe':{w:'hijab',sk:'#e6b994',cl:'#6b4e8a',hc:'#9b7bc0'},
+ 'Jaddi Saeed':{w:'ghutra',sk:'#b98560',cl:'#f4f1ea',beard:1,old:1,white:1}};
 function lookOf(name){return LOOK[name]||{w:'hair',sk:'#c99a73',cl:'#6b8e4e',hair:'#2a1b12'}}
-function moodOf(o){if(o.happy)return'happy';const w=(Date.now()-(o.t||Date.now()))/1000;return w<25?'calm':w<50?'wait':'cross'}
+function patience(o){const p=(o&&o.vip?.6:1);return{calm:(25+perkWait())*p,wait:(50+perkWait())*p,gone:(90+perkWait())*p}}
+function moodOf(o){if(o.happy)return'happy';const w=(Date.now()-(o.t||Date.now()))/1000,P=patience(o);return w<P.calm?'calm':w<P.wait?'wait':'cross'}
+function paused(){return document.hidden||S.duel||S.guide==null||S.guide<3||[...document.querySelectorAll('.sheet,.celebrate')].some(x=>!x.hidden)}
+function walkouts(){if(paused()){S.orders.forEach(o=>{if(o&&o.t)o.t+=1000});return}
+  S.orders.forEach((o,k)=>{if(!o||o.happy||o.gone)return;if((Date.now()-o.t)/1000<patience(o).gone)return;o.gone=true;
+    const el=document.querySelectorAll('#orders .order')[k];S.combo=0;sfx.no();setTip(`<b>${esc(o.who)} gave up waiting and left.</b><br>Serve smiling customers for tips.`);
+    if(el){el.classList.add('walkout');setTimeout(()=>{nextCustomer(k);render()},450)}else{nextCustomer(k);render()}})}
 function personSVG(name,mood,bg){const L=lookOf(name),sk=L.sk;let back='',front='',body='';
   body=`<path d="M6 40 C7 31 13 28 20 28 C27 28 33 31 34 40Z" fill="${L.cl}"/>`;
   if(L.w==='ghutra'||L.w==='shemagh'){const cloth=L.w==='shemagh'?'url(#chk)':'#fbfaf6';
@@ -402,7 +445,7 @@ function personSVG(name,mood,bg){const L=lookOf(name),sk=L.sk;let back='',front=
   const eyeY=17.6,mouth=mood==='happy'?'M16.6 22.2 Q20 25.6 23.4 22.2':mood==='calm'?'M17.2 22.6 Q20 24.4 22.8 22.6':mood==='wait'?'M17.4 23.4 L22.6 23.4':'M17.2 24.4 Q20 22 22.8 24.4';
   const brows=mood==='cross'?`<path d="M15.2 15 L18.2 15.9 M24.8 15 L21.8 15.9" stroke="#2a1b12" stroke-width="1.1" stroke-linecap="round"/>`:mood==='wait'?`<path d="M15.4 15.4 L18.2 15.4 M21.8 15.4 L24.6 15.4" stroke="#2a1b12" stroke-width=".9" stroke-linecap="round"/>`:'';
   const eyes=mood==='happy'?`<path d="M15.8 ${eyeY} Q16.9 16.4 18 ${eyeY} M22 ${eyeY} Q23.1 16.4 24.2 ${eyeY}" stroke="#2a1b12" stroke-width="1.1" fill="none" stroke-linecap="round"/>`:`<circle cx="16.9" cy="${eyeY}" r="1.15" fill="#2a1b12"/><circle cx="23.1" cy="${eyeY}" r="1.15" fill="#2a1b12"/>`;
-  const beard=L.beard?`<path d="M13.6 20 C14 26.5 17 28 20 28 C23 28 26 26.5 26.4 20 C25 23 23 24 20 24 C17 24 15 23 13.6 20Z" fill="#2a1b12" opacity=".85"/>`:L.moust?`<path d="M16.8 21.4 Q20 20 23.2 21.4 Q20 22.4 16.8 21.4Z" fill="#2a1b12"/>`:'';
+  const beard=L.beard?`<path d="M13.6 20 C14 26.5 17 28 20 28 C23 28 26 26.5 26.4 20 C25 23 23 24 20 24 C17 24 15 23 13.6 20Z" fill="${L.white?'#e9e4da':'#2a1b12'}" opacity=".9"/>`:L.moust?`<path d="M16.8 21.4 Q20 20 23.2 21.4 Q20 22.4 16.8 21.4Z" fill="#2a1b12"/>`:'';
   const cheeks=mood==='happy'?`<circle cx="15" cy="21" r="1.4" fill="#e0705a" opacity=".35"/><circle cx="25" cy="21" r="1.4" fill="#e0705a" opacity=".35"/>`:'';
   const sweat=mood==='cross'?`<path d="M28.4 13 Q29.6 15.4 28.4 16.4 Q27.2 15.4 28.4 13Z" fill="#7cc4ef"/>`:'';
   const lines=L.old?`<path d="M14.6 19.6 L15.6 19.9 M25.4 19.6 L24.4 19.9" stroke="#8a5a3a" stroke-width=".6"/>`:'';
@@ -417,6 +460,8 @@ function fresh(){return{cells:Array(N).fill(null),orders:[],coins:50,energy:EMAX
 function load(){try{const s=JSON.parse(localStorage.getItem('spicesouk'));if(s&&s.cells&&s.cells.length===N){if(s.intro&&s.guide==null)s.guide=3;return Object.assign(fresh(),s)}}catch(e){}return null}
 function save(){if(S.duel)return;try{localStorage.setItem('spicesouk',JSON.stringify(S))}catch(e){}}
 S=load()||fresh();
+if(S.souk==null){let k=0;SOUKS.forEach((x,i)=>{if(S.level>=x.at)k=i});S.souk=k;S.built=Math.min(8,Math.max(0,S.level-1));if(k>0)S.built=0}
+S.orders.forEach(o=>{o.t=Date.now()});
 if(!S.cells.some(v=>v!=null)){[0,0,0,1,0,2].forEach((t,k)=>S.cells[[5,6,9,10,13,14][k]]=t)}
 
 /* ---------- sound ---------- */
@@ -467,7 +512,7 @@ function potSVG(t){
   }
 }
 function jarHTML(t,mini){return `<div class="jar${mini?' mini':''}" style="--tc:${POTS[t][0]}">${potSVG(t)}${mini?'':`<span class="tier">${t+1}</span>`}</div>`}
-function soukIdx(){let k=0;SOUKS.forEach((s,i)=>{if(S.level>=s.at)k=i});return k}
+function soukIdx(){return Math.min(S.souk||0,SOUKS.length-1)}
 function xpNeed(){return 20+S.level*15}
 function maxTier(){return S.duel?4:Math.min(MAX,2+S.level)}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
@@ -490,7 +535,7 @@ while(S.orders.length<3)S.orders.push(newOrder());
 let toastT;
 function toast(html,ms=2600){
   /* in play, news goes in the message line beside the chest so it never covers the board or the customers */
-  if(![...document.querySelectorAll('.sheet')].some(x=>!x.hidden)&&$('tip')){const tp=$('tip');tp.innerHTML=html;tp.classList.remove('news');void tp.offsetWidth;tp.classList.add('news');clearTimeout(toastT);toastT=setTimeout(()=>tp.classList.remove('news'),ms);return}
+  if(![...document.querySelectorAll('.sheet')].some(x=>!x.hidden)&&$('tip')){const tp=$('tip');tp.innerHTML=html.replace('</b>','</b><br>');tp.classList.remove('news');void tp.offsetWidth;tp.classList.add('news');clearTimeout(toastT);toastT=setTimeout(()=>tp.classList.remove('news'),ms);return}
   const t=$('toast');t.innerHTML=html;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),ms)}
 function center(el){const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2}}
 function burst(el,color,n=12){const {x,y}=center(el),fx=$('fx');for(let i=0;i<n;i++){const p=document.createElement('div');p.className='p';p.style.background=i%3?color:'#fff3a0';p.style.left=x+'px';p.style.top=y+'px';fx.appendChild(p);const a=Math.random()*Math.PI*2,d=30+Math.random()*50;p.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:1},{transform:`translate(${Math.cos(a)*d-4}px,${Math.sin(a)*d-4}px) scale(.2)`,opacity:0}],{duration:500+Math.random()*250,easing:'cubic-bezier(.2,.8,.3,1)'}).onfinish=()=>p.remove()}}
@@ -507,7 +552,7 @@ function renderTop(){
   $('sack').classList.toggle('empty',S.energy<=0);
 }
 function fillQueue(){if(!S.queue)S.queue=[];while(S.queue.length<3){const o=newOrder();o.fresh=false;S.queue.push(o)}}
-function nextCustomer(k){fillQueue();const o=S.queue.shift();o.fresh=true;o.t=Date.now();S.orders[k]=o;fillQueue();return o}
+function nextCustomer(k){fillQueue();const o=S.queue.shift();o.fresh=true;o.t=Date.now();if(!S.duel&&S.level>=3&&!S.orders.some(x=>x&&x.vip)&&Math.random()<.15)o.vip=true;S.orders[k]=o;fillQueue();return o}
 function renderQueue(){const q=$('queue');if(!q)return;fillQueue();
   q.innerHTML=`<span class="qlabel">In line</span>`+S.queue.map((o,i)=>`<div class="qp" style="--i:${i}" title="${esc(o.who)}">${personSVG(o.who,'calm','rgba(255,243,220,.18)')}</div>`).join('')}
 function updateMoods(){document.querySelectorAll('#orders .order').forEach((d,i)=>{const o=S.orders[i];if(!o)return;const m=moodOf(o);if(d.dataset.mood!==m){d.dataset.mood=m;const f=d.querySelector('.face');if(f)f.innerHTML=personSVG(o.who,m)+(o.happy?'<span class="mood">❤️</span>':'')}})}
@@ -516,9 +561,9 @@ function renderOrders(){renderQueue();
   S.orders.forEach((o,i)=>{
     const ready=canServe(o);const used={};
     const needs=o.n.map(t=>{used[t]=(used[t]||0)+1;const have=(c[t]||0)>=used[t];return `<div class="need${have?' have':''}" style="--tc:${POTS[t][0]}" aria-label="Needs ${SPICES[t].n}, number ${t+1}${have?', on your tray':''}">${jarHTML(t,true)}<span class="num">${t+1}</span><span class="nm">${SPICES[t].n}</span><span class="ok"></span></div>`}).join('');
-    const d=document.createElement('div');d.className='order'+(o.fresh?' in':'');o.fresh=false;
+    const d=document.createElement('div');d.className='order'+(o.fresh?' in':'')+(o.vip?' vip':'');o.fresh=false;
     if(!o.t)o.t=Date.now();const m=moodOf(o);d.dataset.mood=m;
-    d.innerHTML=`<div class="ohead"><div class="face">${personSVG(o.who,m)}</div><div><div class="dish">${o.d}</div><div class="oname">${o.who}</div></div></div><div class="needs">${needs}</div><button type="button" class="serve${ready?' ready':''}">${ready?'Serve':'Waiting'}</button>`;
+    d.innerHTML=`<div class="ohead"><div class="face">${personSVG(o.who,m)}</div><div><div class="dish">${o.vip?'<span class="vipb">VIP</span>':''}${o.d}</div><div class="oname">${o.who}</div></div></div><div class="needs">${needs}</div><button type="button" class="serve${ready?' ready':''}">${ready?'Serve':'Waiting'}</button>`;
     d.querySelector('.serve').onclick=()=>serve(i,d);
     box.appendChild(d);
   });
@@ -528,7 +573,7 @@ function renderBoard(){
   const b=$('board'),need=neededSet();b.innerHTML='';
   S.cells.forEach((t,i)=>{const c=document.createElement('div');c.className='cell'+(sel===i?' sel':'')+(t!=null&&need.has(t)?' needed':'');c.dataset.i=i;c.setAttribute('role','button');c.tabIndex=0;c.setAttribute('aria-label',t==null?'Empty slot':SPICES[t].n);if(t!=null)c.innerHTML=jarHTML(t);b.appendChild(c)});
 }
-function render(){renderCrateBtn();renderTop();renderOrders();renderBoard();renderChest();save();guide()}
+function render(){renderGoalBtn();renderStall();renderCrateBtn();renderTop();renderOrders();renderBoard();renderChest();save();guide()}
 /* first-game guide: a finger points at the next thing to tap until the player has
    tapped the sack, merged once and served once. Existing players never see it. */
 function pairCells(){const seen={};for(let i=0;i<N;i++){const t=S.cells[i];if(t==null||t>=MAX)continue;if(seen[t]!=null)return[seen[t],i];seen[t]=i}return null}
@@ -562,14 +607,67 @@ const DECOR=[
  {n:'Tea glasses',s:'<svg viewBox="0 0 24 24"><path d="M6 8h5l-1 11H7z" fill="#c0643a" stroke="#e9b85a"/><path d="M13 8h5l-1 11h-3z" fill="#c0643a" stroke="#e9b85a"/><path d="M4 20h16" stroke="#e9b85a" stroke-width="1.5"/></svg>'}
 ];
 const CHEST=5;
+/* the purpose: restore the family stall, one part at a time, then travel on to the next souk.
+   Each part costs coins, is drawn on the stall, says a line from Jaddi Saeed, and gives a perk. */
+const STALLS=[
+ {name:'Saeed & Sons',steps:[
+  {n:'Hang the brass lantern',c:40,perk:'wait',say:'I lit this lantern every evening for forty years. Now the souk can see us again.'},
+  {n:'Lay Grandmother’s rug',c:80,perk:'tip',say:'Your grandmother carried this rug from Isfahan. People will stop to sit and talk.'},
+  {n:'Polish the dallah',c:140,perk:'tip',say:'No guest leaves without coffee. That is the rule of this stall.'},
+  {n:'Hang fresh herbs',c:200,perk:'wait',say:'Herbs at the front. Let the smell bring them in from the street.'},
+  {n:'Fix the copper scale',c:300,perk:'tip',say:'An honest scale. Never short a customer, not by one gram.'},
+  {n:'Paint the old sign',c:400,perk:'tip',say:'Saeed & Sons, since 1962. Now the name is yours too.'},
+  {n:'Cushions for guests',c:520,perk:'wait',say:'Cushions for the old men who come every day to argue about cardamom.'},
+  {n:'Tea glasses for all',c:650,perk:'tip',say:'Tea for everyone. The stall is alive again, habibi. I am proud of you.'}]},
+ {name:'Dar Saeed, Marrakech',steps:[
+  {n:'Hang a copper lamp',c:90,perk:'wait',say:'A letter from Jaddi: my old friend Youssef kept a corner of the medina for us. Light it up.'},
+  {n:'Lay a Berber rug',c:160,perk:'tip',say:'Red and saffron, like the rugs in Fes. Customers will feel at home.'},
+  {n:'Brew mint tea',c:250,perk:'tip',say:'In Marrakech you pour the tea from high. The higher, the better the welcome.'},
+  {n:'Dry the herbs',c:360,perk:'wait',say:'Ras el hanout has thirty spices. Learn every one of them.'},
+  {n:'Tune the brass scale',c:480,perk:'tip',say:'Here they will test your scale. Let them. Ours is honest.'},
+  {n:'Carve the cedar sign',c:620,perk:'tip',say:'The name of our family, now in two cities.'},
+  {n:'Pillows on the bench',c:780,perk:'wait',say:'Let them rest. A tired customer buys nothing.'},
+  {n:'Glasses for the tea',c:950,perk:'tip',say:'Two stalls alive. One more, and the old caravan route is ours again.'}]},
+ {name:'Saeed Baharat, Istanbul',steps:[
+  {n:'Hang a mosaic lamp',c:150,perk:'wait',say:'The Grand Bazaar, habibi. My father sold saffron here before I was born.'},
+  {n:'Lay a kilim',c:260,perk:'tip',say:'A kilim from Konya. Every pattern is a prayer for good trade.'},
+  {n:'Copper coffee pot',c:380,perk:'tip',say:'Turkish coffee, thick and sweet. Serve it with a smile.'},
+  {n:'Hanging herbs',c:520,perk:'wait',say:'Sumac, pul biber, mint. The bazaar has never smelled better.'},
+  {n:'Brass scale',c:680,perk:'tip',say:'The same scale design my father used. Weigh true.'},
+  {n:'Gold-leaf sign',c:860,perk:'tip',say:'Three cities, one name.'},
+  {n:'Silk cushions',c:1050,perk:'wait',say:'Let the merchants sit. Stories are half of this trade.'},
+  {n:'Tulip tea glasses',c:1300,perk:'tip',say:'Deira, Marrakech, Istanbul. You did what I could not. Shukran, my child.'}]}];
+function stall(){return STALLS[Math.min(S.souk||0,STALLS.length-1)]}
+function builtN(){return Math.min(S.built||0,8)}
+function perkWait(){return stall().steps.slice(0,builtN()).filter(x=>x.perk==='wait').length*15}
+function perkTip(){return stall().steps.slice(0,builtN()).filter(x=>x.perk==='tip').length*.05}
 const THANKS=['Shukran!','Perfect!','Just like my mother’s!','Best stall here!','Wallah, delicious!','Smells amazing!','I’ll be back!'];
 function decoCount(){return Math.min(DECOR.length,S.level-1)}
 function renderStall(newest){
-  const n=decoCount();let h='';
-  for(let i=0;i<n;i++)h+=`<div class="deco${newest===i?' new':''}" title="${DECOR[i].n}">${DECOR[i].s}</div>`;
-  if(n<DECOR.length)h+=`<div class="deco next" title="Next decoration at level ${n+2}">?</div><span>${n?'':'Your stall: '}${DECOR[n].n} at level ${n+2}</span>`;
-  $('stall').innerHTML=h;
+  const n=builtN(),st=stall();let h='';
+  for(let i=0;i<n;i++)h+=`<div class="deco${newest===i?' new':''}" title="${esc(st.steps[i].n)}">${DECOR[i].s}</div>`;
+  const nx=st.steps[n],can=nx&&S.coins>=nx.c;
+  h+=`<button class="restore${can?' can':''}" id="restoreBtn" type="button" aria-label="Restore the stall">${n<8?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 4l6 6-3 3-6-6zM11 7l-8 8 3 3 8-8"/></svg>${n}/8`:'Restored'}</button>`;
+  $('stall').innerHTML=h;$('restoreBtn').onclick=openStall;
 }
+function openStall(){audio();renderStallSheet();openSheet('stallSheet')}
+function renderStallSheet(){const st=stall(),n=builtN(),nx=st.steps[n];
+  $('stTitle').textContent=st.name;$('stBar').style.width=(n/8*100)+'%';$('stCount').textContent=`${n} of 8 restored`;
+  $('stGrand').innerHTML=personSVG('Jaddi Saeed','calm');
+  $('stSay').textContent=n===0?'This was my stall, habibi. It has seen better days. Serve the customers, earn coins, and bring it back to life.':n<8?st.steps[n-1].say:(S.souk<STALLS.length-1?'The stall is restored. Now go, our family had a stall in '+SOUKS[S.souk+1].n.split(' ')[0]+' too.':st.steps[7].say);
+  $('stList').innerHTML=st.steps.map((x,i)=>{const done=i<n,next=i===n;const perk=x.perk==='wait'?'Customers wait 15s longer':'Tips +5%';
+    return `<div class="strow${done?' done':''}${next?' next':''}"><span class="sti">${DECOR[i].s}</span><div><b>${esc(x.n)}</b><small>${done?'Done · '+perk:perk}</small></div>${next?`<button class="btn warm" id="buildBtn" type="button"${S.coins<x.c?' disabled':''}><span class="coin"></span>${x.c}</button>`:done?'<span class="tick">✓</span>':`<span class="cost"><span class="coin"></span>${x.c}</span>`}</div>`}).join('');
+  const b=$('buildBtn');if(b)b.onclick=()=>build();
+  const tv=$('travelBtn');tv.hidden=!(n>=8&&S.souk<STALLS.length-1);if(!tv.hidden)tv.textContent='Travel to '+SOUKS[S.souk+1].n;
+  $('stNeed').textContent=nx&&S.coins<nx.c?`You need ${nx.c-S.coins} more coins. Serve customers to earn them.`:'';}
+function build(){const st=stall(),n=builtN(),x=st.steps[n];if(!x||S.coins<x.c)return;
+  S.coins-=x.c;S.built=n+1;sfx.level();goal('build');renderStall(n);render();$('stallSheet').hidden=true;
+  celebrate({art:`<div style="width:96px;height:96px;margin:auto">${DECOR[n].s}</div>`,title:x.n+'!',text:`“${x.say}” — Jaddi Saeed`,
+    list:[x.perk==='wait'?'Customers will wait 15 seconds longer':'Customers tip 5% more',`${n+1} of 8 restored`],btn:n+1>=8?'See the stall':'Keep selling'});
+  if(n+1>=8)setTimeout(()=>{renderStallSheet()},10)}
+$('travelBtn').onclick=()=>{if(builtN()<8||S.souk>=STALLS.length-1)return;S.souk++;S.built=0;$('stallSheet').hidden=true;
+  S.orders=[];S.queue=[];while(S.orders.length<3)S.orders.push(newOrder());S.orders.forEach(o=>o.t=Date.now());renderStall();render();
+  celebrate({art:'<div style="font-size:72px;line-height:1">🐪</div>',title:'Welcome to '+SOUKS[S.souk].n,text:'A new stall to restore, new faces, new stories.',list:['Your coins and spices come with you'],btn:'Open the stall'})};
 function renderChest(){
   const st=Math.min(S.stars,CHEST);$('chestFill').style.width=(st/CHEST*100)+'%';
   const ready=S.stars>=CHEST;$('chest').classList.toggle('ready',ready);
@@ -600,6 +698,7 @@ function openChest(){
   render();
   celebrate({art:CHEST_SVG,title:'Souk chest opened!',text:'Your regulars left you a gift.',list});
 }
+$('goalBtn').onclick=openGoals;
 $('chest').onclick=openChest;
 
 /* ---------- game actions ---------- */
@@ -625,7 +724,7 @@ function act(a,b){
   if(tb==null){S.cells[b]=ta;S.cells[a]=null;sel=null;sfx.drop();render();mark(b,'pop');return}
   if(ta===tb){
     if(ta>=MAX){sfx.no();sel=null;render();toast('<b>Rose is the rarest</b>Serve it to a customer who wants it.');return}
-    const nt=ta+1;S.cells[b]=nt;S.cells[a]=null;sel=null;if(S.guide===1&&!S.duel)S.guide=2;
+    const nt=ta+1;S.cells[b]=nt;S.cells[a]=null;sel=null;goal('make',nt);if(S.guide===1&&!S.duel)S.guide=2;
     sfx.merge(ta);buzz(nt>=5?30:12);render();mark(b,'pop');burst(cellEl(b),SPICES[nt].c,nt>=5?20:12);if(nt>=5)shake();
     if(!S.found.includes(nt)){S.found.push(nt);save();toast(`<b>New spice: ${SPICES[nt].n}</b>${SPICES[nt].f}`,3800)}
     else setTip(`Made <b>${SPICES[nt].n}</b>.`);
@@ -657,9 +756,12 @@ function serve(k,el){
   o.n.forEach((t,j)=>{const i=S.cells.findIndex((v,x)=>v===t&&!taken.includes(x));taken.push(i);const ce=cellEl(i);flyPot(ce,el,t,j*90);burst(ce,SPICES[t].c,8)});
   taken.forEach(i=>S.cells[i]=null);
   const now=Date.now();S.combo=(now-(S.lastServe||0)<15000)?(S.combo||1)+1:1;S.lastServe=now;S.served=(S.served||0)+1;if(!S.duel&&S.served%CRATE_EVERY===0)crateArrives();
-  const base=o.n.reduce((s,t)=>s+(t+1)*(t+1)*3,5),bonus=S.combo>1?Math.round(base*.25*(S.combo-1)):0,pay=base+bonus,xp=o.n.reduce((s,t)=>s+t+2,0);
+  const mood=moodOf(o),tipR=mood==='calm'?.25+perkTip():mood==='wait'?perkTip():-.25;
+  const base=Math.round(o.n.reduce((s,t)=>s+(t+1)*(t+1)*3,5)*(o.vip?2:1)),bonus=S.combo>1?Math.round(base*.25*(S.combo-1)):0,tipAmt=Math.round((base+bonus)*tipR),pay=Math.max(1,base+bonus+tipAmt),xp=o.n.reduce((s,t)=>s+t+2,0);
   sfx.serve();buzz(25);el.classList.add('happy');o.happy=true;el.querySelector('.face').innerHTML=personSVG(o.who,'happy')+'<span class="mood">❤️</span>';el.dataset.mood='happy';
-  el.insertAdjacentHTML('beforeend',`<div class="bubble">${pick(THANKS)}</div>`);
+  el.insertAdjacentHTML('beforeend',`<div class="bubble">${mood==='cross'?pick(['Finally…','Took a while.','Hmm, OK.']):pick(THANKS)}</div>`);
+  if(!S.duel){if(tipAmt>0)setTimeout(()=>setTip(`<b>${esc(o.who)} left a tip: +${tipAmt}</b><br>Fast service pays.`),300);else if(tipAmt<0)setTimeout(()=>setTip(`<b>${esc(o.who)} paid ${-tipAmt} less.</b><br>They waited too long.`),300)}
+  goal('serve');if(mood==='calm')goal('happy');goal('earn',pay);if(S.combo>=2)goal('combo',S.combo);
   if(S.combo>1){const c=document.createElement('div');c.className='combo';c.textContent=`Combo ×${S.combo}! +${bonus}`;$('app').appendChild(c);setTimeout(()=>c.remove(),1150);[0,.08,.16].forEach((d,i)=>tone(880*(1+i*.25)*(1+S.combo*.05),.15,'triangle',.14,d))}
   plus(el,'+'+pay);sel=null;renderBoard();const st=S;
   if(st.duel){st.coins+=pay;renderTop();pushScore();flyCoins(el,Math.min(10,2+Math.floor(pay/12)),()=>{});
@@ -673,13 +775,9 @@ function serve(k,el){
 }
 function levelCheck(){
   while(S.xp>=xpNeed()){S.xp-=xpNeed();const before=soukIdx();S.level++;S.energy=Math.max(S.energy,EMAX);sfx.level();
-    const after=soukIdx(),di=S.level-2,d=DECOR[di];
     const list=['<span class="bolt"></span>Energy refilled'];
-    if(d)list.unshift(`<span style="width:30px;height:30px;display:grid">${d.s}</span>New for your stall: ${d.n}`);
     if(S.level+2<=MAX)list.push(`${jarHTML(maxTier(),true)}Customers now ask for ${SPICES[maxTier()].n}`);
-    if(after>before)celebrate({art:d?d.s:CHEST_SVG,title:'New souk unlocked!',text:`Welcome to ${SOUKS[after].n}. New faces, bigger orders.`,list,btn:'Open my stall'});
-    else celebrate({art:d?d.s:CHEST_SVG,title:`Level ${S.level}!`,text:'Your stall is growing.',list});
-    renderStall(di);
+    celebrate({art:`<div style="width:90px;height:100px;margin:auto">${jarHTML(maxTier())}</div>`,title:`Level ${S.level}!`,text:'Word is spreading about your stall.',list});
   }
 }
 
@@ -689,10 +787,31 @@ function tick(){
   if(S.energy<EMAX){const gained=Math.floor((Date.now()-S.eAt)/EREGEN);if(gained>0){S.energy=Math.min(EMAX,S.energy+gained);S.eAt+=gained*EREGEN;renderTop();save()}
     const left=Math.ceil((EREGEN-(Date.now()-S.eAt))/1000);$('etimer').textContent=S.energy<EMAX?` ${left}s`:''}else $('etimer').textContent='';
 }
-setInterval(()=>{tick();updateMoods()},1000);tick();
+setInterval(()=>{tick();walkouts();updateMoods()},1000);tick();
 
 /* ---------- daily gift ---------- */
 function today(){return new Date().toISOString().slice(0,10)}
+const GOALS={serve:n=>`Serve ${n} customers`,happy:n=>`Serve ${n} customers while they smile`,earn:n=>`Earn ${n} coins`,combo:n=>`Get a ${n}× combo`,make:t=>`Make a ${SPICES[t].n}`,build:()=>'Restore one part of the stall'};
+function goals(){if(S.duel)return null;if(!S.dg||S.dg.day!==today()){
+    const L=S.level,pool=[{k:'serve',goal:6+L},{k:'happy',goal:3},{k:'earn',goal:120+L*30},{k:'combo',goal:3},{k:'make',goal:Math.min(maxTier(),2+(L>2?1:0))}];
+    if(builtN()<8)pool.push({k:'build',goal:1});pool.sort(()=>Math.random()-.5);
+    const yest=new Date(Date.now()-864e5).toISOString().slice(0,10);if(S.dg&&S.dg.claimed!==yest&&S.dg.claimed!==today())S.streak=0;
+    S.dg={day:today(),list:pool.slice(0,3).map(g=>({...g,p:0})),claimed:S.dg&&S.dg.claimed||''}}
+  return S.dg}
+function goal(k,v=1){const g=goals();if(!g)return;let news=null;g.list.forEach(x=>{if(x.k!==k||x.p>=x.goal)return;
+    if(k==='make'){if(v===x.goal)x.p=x.goal}else if(k==='combo'){x.p=Math.max(x.p,Math.min(v,x.goal))}else x.p=Math.min(x.goal,x.p+v);
+    if(x.p>=x.goal)news=x});
+  if(news){const all=g.list.every(x=>x.p>=x.goal);setTimeout(()=>toast(`<b>Goal done: ${GOALS[news.k](news.goal)}</b>${all?'All three done. Tap the scroll to collect your gift!':`${g.list.filter(x=>x.p>=x.goal).length} of 3 goals today.`}`,3200),900)}
+  renderGoalBtn();save()}
+function renderGoalBtn(){const b=$('goalBtn');if(!b)return;const g=goals();b.hidden=!g||S.guide==null||S.guide<3;if(!g)return;
+  const d=g.list.filter(x=>x.p>=x.goal).length,ready=d===3&&g.claimed!==today();$('goalTxt').textContent=g.claimed===today()?'Done':`${d}/3`;b.classList.toggle('ready',ready)}
+function openGoals(){audio();const g=goals();if(!g)return;
+  $('glList').innerHTML=g.list.map(x=>`<div class="glrow${x.p>=x.goal?' done':''}"><div><b>${GOALS[x.k](x.goal)}</b><div class="xpbar"><i style="width:${Math.min(100,x.p/x.goal*100)}%"></i></div></div><span>${x.k==='make'?(x.p>=x.goal?'✓':''):Math.min(x.p,x.goal)+'/'+x.goal}</span></div>`).join('');
+  const all=g.list.every(x=>x.p>=x.goal),got=g.claimed===today();const c=$('glClaim');c.disabled=!all||got;c.textContent=got?'Collected. New goals tomorrow':all?'Collect your gift':'Finish all three for a gift';
+  $('glStreak').textContent=S.streak?`🔥 ${S.streak} day streak`:'Finish today’s goals to start a streak';openSheet('goalSheet')}
+$('glClaim').onclick=()=>{const g=goals();if(!g||g.claimed===today()||!g.list.every(x=>x.p>=x.goal))return;g.claimed=today();S.streak=(S.streak||0)+1;
+  const coins=80+Math.min(7,S.streak)*20;S.coins+=coins;S.energy+=10;$('goalSheet').hidden=true;render();renderGoalBtn();
+  celebrate({art:'<div style="font-size:72px;line-height:1">📜</div>',title:'Daily goals done!',text:S.streak>1?`${S.streak} days in a row. Your gift grows with your streak.`:'Come back tomorrow for three new goals.',list:[`<span class="coin"></span>+${coins} coins`,'<span class="bolt"></span>+10 energy',`🔥 ${S.streak} day streak`]})};
 function daily(){if(S.guide!=null&&S.guide<3)return;if(S.daily!==today()&&S.intro){S.daily=today();S.coins+=40;S.energy=Math.min(EMAX+10,S.energy+10);save();setTimeout(()=>toast('<b>Daily gift</b>+40 coins and +10 energy. Come back tomorrow for more.',3500),600)}}
 
 /* ---------- drag + tap on board ---------- */
