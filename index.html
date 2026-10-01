@@ -158,6 +158,12 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .hand{position:fixed;z-index:40;font-size:34px;pointer-events:none;transform:translate(-50%,-100%);animation:poke .9s ease-in-out infinite;filter:drop-shadow(0 3px 2px rgba(0,0,0,.45));transition:left .25s,top .25s}
 .hand[hidden]{display:none}
+.say{position:fixed;background:#fff;color:#3a1c0e;border-radius:14px;padding:6px 10px;font:800 12.5px var(--body);line-height:1.25;width:max-content;max-width:150px;text-align:center;box-shadow:0 6px 14px rgba(0,0,0,.35);z-index:6;pointer-events:none;animation:say 3.2s forwards}
+.say:after{content:"";position:absolute;left:var(--tail,50%);bottom:-6px;margin-left:-6px;border:6px solid transparent;border-top-color:#fff;border-bottom:0}
+.say.cross{background:#ffe1d6;color:#8a1f12;font-size:13.5px}.say.cross:after{border-top-color:#ffe1d6}
+.say.line{max-width:140px;font-size:12px}.say.line:after{bottom:auto;top:-6px;border-top:0;border-bottom:6px solid #fff}
+.qp{position:relative}
+@keyframes say{0%{opacity:0;translate:0 6px;scale:.8}8%{opacity:1;translate:0 0;scale:1.05}12%{scale:1}85%{opacity:1}100%{opacity:0;translate:0 -4px}}
 .restore{display:flex;align-items:center;gap:4px;min-height:34px;padding:0 10px;border-radius:12px;background:rgba(0,0,0,.3);color:var(--cream);font:700 13px var(--body);white-space:nowrap}
 .restore svg{width:16px;height:16px}.restore.can{background:linear-gradient(#ffd66b,#f0a52a);color:#4a2412;animation:chest 1.6s infinite}
 .stgrand{display:flex;gap:12px;align-items:center;margin:4px 0 10px}.sta{width:58px;height:58px;flex:none}.sta svg{width:100%;height:100%}
@@ -566,7 +572,26 @@ function fillQueue(){if(!S.queue)S.queue=[];while(S.queue.length<3){const o=newO
 function nextCustomer(k){fillQueue();const o=S.queue.shift();o.fresh=true;o.t=Date.now();if(!S.duel&&S.level>=3&&!S.orders.some(x=>x&&x.vip)&&Math.random()<.15)o.vip=true;S.orders[k]=o;fillQueue();return o}
 function renderQueue(){const q=$('queue');if(!q)return;fillQueue();
   q.innerHTML=`<span class="qlabel">In line</span>`+S.queue.map((o,i)=>`<div class="qp" style="--i:${i}" title="${esc(o.who)}">${personSVG(o.who,'calm','rgba(255,243,220,.18)')}</div>`).join('')}
-function updateMoods(){document.querySelectorAll('#orders .order').forEach((d,i)=>{const o=S.orders[i];if(!o)return;const m=moodOf(o);if(d.dataset.mood!==m){d.dataset.mood=m;const f=d.querySelector('.face');if(f)f.innerHTML=personSVG(o.who,m)+(o.happy?'<span class="mood">❤️</span>':'')}})}
+/* customers talk: Emirati banter that gets louder the longer they wait */
+const SAY={
+ calm:['Salam alaikum!','Shlonak? All good?','Habibi, take your time… but not too much','Smells like my teta’s kitchen!','Mashallah, nice stall!','One plate please, inshallah','I came all the way from Ajman!','Is this the famous stall?'],
+ wait:['Yalla habibi…','Shu fi? Still waiting…','Wallah, I’m hungry','Bas shway faster?','My karak is getting cold!','Is the chef on Dubai time?','Inshallah today?','I left my car running…'],
+ cross:['Yallaaa! 😤','Hurry up, habibi!','I was in the queue since Ramadan!','Wallah, I’ll go to the next stall!','Khalas, I’m starving! 😩','Even Salik is faster than this!','I parked on the double yellow line!','My mother is calling me! 📞','It’s 48 degrees outside, yalla!','Faster than Sheikh Zayed Road traffic, please!'],
+ vip:['Do you know who I am? 😎','My Lambo is double parked','Habibi, VIP means fast!','Gold service please ✨'],
+ line:['Yalla, my turn?','Ana awal wahid! I was first!','Excuse me, I was here before him','Haram, it’s so hot!','Save me a plate!','Is this the line for shawarma?','Wallah this queue…','Who’s next? Me? Inshallah']};
+let lastSay=0,lastLine=0;
+function speak(el,txt,cls){if(!el)return;const line=/line/.test(cls||''),key=line?'line':'order'+(cls||'').match(/s(\d)/)?.[1];
+  document.querySelectorAll('.say[data-k="'+key+'"]').forEach(x=>x.remove());
+  const r=el.getBoundingClientRect(),b=document.createElement('div');b.className='say '+(cls||'');b.dataset.k=key;b.textContent=txt;$('fx').appendChild(b);
+  const w=b.offsetWidth,h=b.offsetHeight,cx=r.left+r.width/2,x=Math.max(8,Math.min(innerWidth-8-w,cx-w/2));
+  b.style.left=x+'px';b.style.top=(line?r.bottom+8:r.top-h-8)+'px';b.style.setProperty('--tail',(Math.max(14,Math.min(w-14,cx-x)))+'px');setTimeout(()=>b.remove(),3200)}
+function chatter(){if(document.hidden||[...document.querySelectorAll('.sheet,.celebrate')].some(x=>!x.hidden))return;const now=Date.now();
+  const els=document.querySelectorAll('#orders .order');
+  if(now-lastSay>4500&&Math.random()<.45){const ks=S.orders.map((o,k)=>k).filter(k=>S.orders[k]&&!S.orders[k].happy&&!S.orders[k].gone);
+    if(ks.length){const angry=ks.filter(k=>moodOf(S.orders[k])==='cross');const k=angry.length&&Math.random()<.7?pick(angry):pick(ks);const o=S.orders[k],m=moodOf(o);
+      speak(els[k],pick(o.vip&&Math.random()<.5?SAY.vip:SAY[m]||SAY.calm),'s'+k+' '+m);lastSay=now;if(m==='cross')tone(330,.08,'square',.04)}}
+  if(now-lastLine>7000&&Math.random()<.3){const q=document.querySelectorAll('#queue .qp');if(q.length){speak(pick([...q]),pick(SAY.line),'line');lastLine=now}}}
+function updateMoods(){document.querySelectorAll('#orders .order').forEach((d,i)=>{const o=S.orders[i];if(!o)return;const m=moodOf(o);if(d.dataset.mood!==m){if(m==='cross'&&d.dataset.mood==='wait'&&!document.hidden){speak(d,pick(SAY.cross),'s'+i+' cross');lastSay=Date.now()}d.dataset.mood=m;const f=d.querySelector('.face');if(f)f.innerHTML=personSVG(o.who,m)+(o.happy?'<span class="mood">❤️</span>':'')}})}
 function renderOrders(){renderQueue();
   const c=counts();const box=$('orders');box.innerHTML='';
   S.orders.forEach((o,i)=>{
@@ -800,7 +825,7 @@ function tick(){
   if(S.energy<EMAX){const gained=Math.floor((Date.now()-S.eAt)/EREGEN);if(gained>0){S.energy=Math.min(EMAX,S.energy+gained);S.eAt+=gained*EREGEN;renderTop();save()}
     const left=Math.ceil((EREGEN-(Date.now()-S.eAt))/1000);$('etimer').textContent=S.energy<EMAX?` ${left}s`:''}else $('etimer').textContent='';
 }
-setInterval(()=>{tick();walkouts();updateMoods()},1000);tick();
+setInterval(()=>{tick();walkouts();updateMoods();chatter()},1000);tick();
 
 /* ---------- daily gift ---------- */
 function today(){return new Date().toISOString().slice(0,10)}
