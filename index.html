@@ -158,6 +158,11 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .hand{position:fixed;z-index:40;font-size:34px;pointer-events:none;transform:translate(-50%,-100%);animation:poke .9s ease-in-out infinite;filter:drop-shadow(0 3px 2px rgba(0,0,0,.45));transition:left .25s,top .25s}
 .hand[hidden]{display:none}
+.fbq{font-weight:800;font-size:15px;margin:12px 0 6px}
+.fbrow{display:flex;gap:6px}.fbe{flex:1;min-height:48px;font-size:26px;border-radius:14px;background:#f6e6c8;filter:grayscale(.6);opacity:.75}.fbe.on{filter:none;opacity:1;background:#ffd66b;box-shadow:0 0 0 2px #f0a52a inset}
+.fbchips{display:flex;flex-wrap:wrap;gap:6px}.fbc{min-height:40px;padding:0 12px;border-radius:20px;background:#f6e6c8;font:700 14px var(--body);color:#4a2412}.fbc.on{background:#4a2412;color:#fff3dc}
+.fbrow .fbc{flex:1}.fbtext{min-height:80px;padding:10px 14px;margin-top:12px;resize:vertical;font-size:16px}#fbName{margin-top:8px;font-size:16px}
+.fblink{display:block;margin:10px auto 0;background:none;color:#7a4a22;font:700 14px var(--body);text-decoration:underline;min-height:40px;padding:0 10px}
 .say{position:fixed;background:#fff;color:#3a1c0e;border-radius:14px;padding:6px 10px;font:800 12.5px var(--body);line-height:1.25;width:max-content;max-width:150px;text-align:center;box-shadow:0 6px 14px rgba(0,0,0,.35);z-index:6;pointer-events:none;animation:say 3.2s forwards}
 .say:after{content:"";position:absolute;left:var(--tail,50%);bottom:-6px;margin-left:-6px;border:6px solid transparent;border-top-color:#fff;border-bottom:0}
 .say span{display:block}.say small{display:block;font:700 10.5px var(--body);opacity:.65;margin-top:2px;font-style:italic}
@@ -367,6 +372,7 @@ body.duel #crateBtn{display:none}
       <div><span>3</span><p><b>Serve</b> customers what they ask for.</p></div>
     </div>
     <button class="btn warm" id="startBtn" type="button" style="width:100%">Let's play</button>
+    <button class="fblink" id="fbOpen1" type="button">💬 Send feedback</button>
   </div></div>
 
   <div class="sheet" id="book" hidden><div class="card">
@@ -381,8 +387,25 @@ body.duel #crateBtn{display:none}
     <div class="shoprow"><div><b>Tea break</b><br><small>Rest for 3 seconds for +15 energy</small></div><button class="btn" id="adBtn" type="button">Rest</button></div>
     <div class="shoprow"><div><b>Daily gift</b><br><small id="dailyInfo"></small></div></div>
     <div class="shoprow"><div><b>Sound</b><br><small>Music and effects</small></div><button class="btn" id="muteBtn" type="button" aria-label="Sound on"><svg style="width:20px;height:20px;vertical-align:-4px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path id="wave" d="M16 8a5 5 0 0 1 0 8"/></svg><span id="muteTxt">Sound</span></button></div>
+    <div class="shoprow"><div><b>Feedback</b><br><small>Tell Nasser what you think</small></div><button class="btn warm" id="fbOpen2" type="button">Send</button></div>
     <div class="shoprow"><div><b>Start over</b><br><small>Wipes your stall and coins</small></div><button class="btn" id="resetBtn" type="button">Reset</button></div>
     <button class="btn" type="button" data-close style="width:100%;margin-top:10px">Close</button>
+  </div></div>
+
+  <div class="sheet" id="fbSheet" hidden><div class="card">
+    <h2>Tell Nasser what you think</h2>
+    <p class="dnote">Takes 20 seconds. It helps make the game better.</p>
+    <div class="fbq">How fun is it?</div>
+    <div class="fbrow" id="fbFun"></div>
+    <div class="fbq">What was confusing or annoying?</div>
+    <div class="fbchips" id="fbPain"></div>
+    <div class="fbq">Would you play again tomorrow?</div>
+    <div class="fbrow" id="fbAgain"></div>
+    <textarea class="field fbtext" id="fbText" maxlength="600" placeholder="Anything else? Ideas, bugs, what made you laugh…"></textarea>
+    <input class="field" id="fbName" maxlength="24" placeholder="Your name (optional)" autocomplete="nickname">
+    <button class="btn warm dfull" id="fbSend" type="button">Send feedback</button>
+    <p class="dnote" id="fbMsg" style="text-align:center"></p>
+    <button class="btn" type="button" data-close style="width:100%;margin-top:4px">Close</button>
   </div></div>
 
   <div class="sheet" id="goalSheet" hidden><div class="card">
@@ -857,10 +880,33 @@ function tick(){
   if(S.energy<EMAX){const gained=Math.floor((Date.now()-S.eAt)/EREGEN);if(gained>0){S.energy=Math.min(EMAX,S.energy+gained);S.eAt+=gained*EREGEN;renderTop();save()}
     const left=Math.ceil((EREGEN-(Date.now()-S.eAt))/1000);$('etimer').textContent=S.energy<EMAX?` ${left}s`:''}else $('etimer').textContent='';
 }
-setInterval(()=>{tick();walkouts();updateMoods();chatter()},1000);tick();
+setInterval(()=>{tick();walkouts();updateMoods();chatter();trackPlay()},1000);tick();
 
 /* ---------- daily gift ---------- */
 function today(){return new Date().toISOString().slice(0,10)}
+/* feedback: answers go by email to Nasser, with how far the player got so we can see who comes back */
+const FB_TO='okhathak@gmail.com',FUN=['😴','😐','🙂','😀','🤩'],PAIN=['How to play','Too slow','Too hard','Ran out of energy','Customers walk out','Too much text','Screen too small','Nothing!'],AGAIN=['Yes','Maybe','No'];
+let fb={fun:0,pain:[],again:''};
+function trackPlay(){if(document.hidden||S.duel)return;S.playSec=(S.playSec||0)+1;const d=today();if(!S.days)S.days=[];if(!S.days.includes(d)){S.days.push(d);if(S.days.length>60)S.days.shift()}if(!S.firstDay)S.firstDay=d;
+  if(!S.fbAsked&&S.playSec>360&&S.guide>=3&&![...document.querySelectorAll('.sheet,.celebrate')].some(x=>!x.hidden)){S.fbAsked=1;setTimeout(()=>toast('<b>Enjoying the souk?</b>Tap 💬 in the Shop to tell Nasser what you think.',5000),500)}}
+function openFb(){audio();fb={fun:0,pain:[],again:''};$('fbText').value='';$('fbName').value=(S.nick&&S.nick!=='Player')?S.nick:'';$('fbMsg').textContent='';$('intro').hidden=true;$('shop').hidden=true;renderFb();openSheet('fbSheet')}
+function renderFb(){$('fbFun').innerHTML=FUN.map((e,i)=>`<button type="button" class="fbe${fb.fun===i+1?' on':''}" data-f="${i+1}" aria-label="${i+1} of 5">${e}</button>`).join('');
+  $('fbPain').innerHTML=PAIN.map(x=>`<button type="button" class="fbc${fb.pain.includes(x)?' on':''}" data-p="${esc(x)}">${esc(x)}</button>`).join('');
+  $('fbAgain').innerHTML=AGAIN.map(x=>`<button type="button" class="fbc${fb.again===x?' on':''}" data-a="${x}">${x}</button>`).join('');
+  $('fbSend').disabled=!fb.fun}
+$('fbSheet').addEventListener('click',e=>{const t=e.target.closest('[data-f],[data-p],[data-a]');if(!t)return;sfx.pick();
+  if(t.dataset.f)fb.fun=+t.dataset.f;else if(t.dataset.p){const x=t.dataset.p;fb.pain=fb.pain.includes(x)?fb.pain.filter(y=>y!==x):fb.pain.concat(x)}else fb.again=t.dataset.a;renderFb()});
+function fbBody(){const name=$('fbName').value.trim().slice(0,24)||'A friend',st=stall();
+  return {name,subject:`Spice Souk feedback: ${'★'.repeat(fb.fun)}${'☆'.repeat(5-fb.fun)} from ${name}`,body:[
+  `Fun: ${fb.fun}/5 ${FUN[fb.fun-1]||''}`,`Confusing or annoying: ${fb.pain.join(', ')||'(nothing ticked)'}`,`Play again tomorrow: ${fb.again||'(no answer)'}`,`Comments: ${$('fbText').value.trim()||'(none)'}`,'',
+  '--- how far they got (filled in by the game) ---',`Level ${S.level} · ${SOUKS[soukIdx()].n} · stall ${builtN()}/8 restored`,`Customers served: ${S.served||0} · coins: ${S.coins}`,
+  `Time played: ${Math.round((S.playSec||0)/60)} min · days played: ${(S.days||[]).length} (first ${S.firstDay||today()})`,`Daily goal streak: ${S.streak||0} · challenges sent: ${S.chSent||0}`,
+  `Device: ${/iPhone|iPad/.test(navigator.userAgent)?'iPhone/iPad':/Android/.test(navigator.userAgent)?'Android':'Computer'} · screen ${innerWidth}x${innerHeight}`,`Sent: ${new Date().toISOString().slice(0,16).replace('T',' ')}`].join('\n')}}
+$('fbSend').onclick=async()=>{if(!fb.fun)return;const m=fbBody();S.nick=m.name==='A friend'?S.nick:m.name;S.fbSent=(S.fbSent||0)+1;save();
+  const url=`mailto:${FB_TO}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.body)}`;location.href=url;
+  $('fbMsg').innerHTML='Your email app should open with everything filled in. Just press Send. 🙏<br><button type="button" class="fblink" id="fbCopy">Email didn’t open? Copy it instead</button>';
+  $('fbCopy').onclick=async()=>{try{await navigator.clipboard.writeText(m.subject+'\n\n'+m.body);$('fbMsg').textContent='Copied. Paste it in a message to Nasser or email '+FB_TO+'.'}catch(e){$('fbMsg').textContent='Please email '+FB_TO}}};
+$('fbOpen1').onclick=openFb;$('fbOpen2').onclick=openFb;
 const GOALS={serve:n=>`Serve ${n} customers`,happy:n=>`Serve ${n} customers while they smile`,earn:n=>`Earn ${n} coins`,combo:n=>`Get a ${n}× combo`,make:t=>`Make a ${SPICES[t].n}`,build:()=>'Restore one part of the stall'};
 function goals(){if(S.duel)return null;if(!S.dg||S.dg.day!==today()){
     const L=S.level,pool=[{k:'serve',goal:6+L},{k:'happy',goal:3},{k:'earn',goal:120+L*30},{k:'combo',goal:3},{k:'make',goal:Math.min(maxTier(),2+(L>2?1:0))}];
@@ -1001,7 +1047,7 @@ let chal=null;
 function chalLink(seed,score,name){return location.origin+location.pathname+'?c='+seed+'-'+score+'-'+encodeURIComponent(String(name||'A friend').slice(0,16))}
 function shareBlock(seed,score,label){chal={seed,score};const n=esc((MAIN||S).nick&&(MAIN||S).nick!=='Player'?(MAIN||S).nick:'');
   return `<div class="chal"><input class="field" id="chName" maxlength="16" placeholder="Your name" value="${n}" aria-label="Your name"><button class="btn warm dfull" type="button" data-share>${label}</button><small id="chMsg"></small></div>`}
-async function shareChallenge(){if(!chal)return;const nm=(($('chName')&&$('chName').value.trim())||'A friend').slice(0,16);S.nick=nm;save();
+async function shareChallenge(){if(!chal)return;S.chSent=(S.chSent||0)+1;const nm=(($('chName')&&$('chName').value.trim())||'A friend').slice(0,16);S.nick=nm;save();
   const url=chalLink(chal.seed,chal.score,nm),text=`${nm} scored ${chal.score} coins in Spice Souk. Same tray, same customers. Can you beat it?`;
   try{if(navigator.share){await navigator.share({title:'Spice Souk challenge',text,url});return}}catch(e){if(e&&e.name==='AbortError')return}
   try{await navigator.clipboard.writeText(text+' '+url);$('chMsg').textContent='Link copied. Paste it to a friend.'}catch(e){$('chMsg').textContent=url}}
