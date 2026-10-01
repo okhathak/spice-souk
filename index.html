@@ -608,20 +608,28 @@ function renderQueue(){const q=$('queue');if(!q)return;fillQueue();
 document.addEventListener('click',e=>{if(fight&&e.target.closest('#queue'))calmFight()});
 /* customers talk: Emirati banter that gets louder the longer they wait */
 const SAY={
- calm:['Salam alaikum!','Shlonak? All good?','Habibi, take your time… but not too much','Smells like my teta’s kitchen!','Mashallah, nice stall!','One plate please, inshallah','I came all the way from Ajman!','Is this the famous stall?'],
- wait:['Yalla habibi…','Shu fi? Still waiting…','Wallah, I’m hungry','Bas shway faster?','My karak is getting cold!','Is the chef on Dubai time?','Inshallah today?','I left my car running…'],
- cross:['Yallaaa! 😤','Arre bhai, kitna time? 😩','Ay, ang tagal! 😤','Ну давай уже! 😤','Hurry up, habibi!','I was in the queue since Ramadan!','Wallah, I’ll go to the next stall!','Khalas, I’m starving! 😩','Even Salik is faster than this!','I parked on the double yellow line!','My mother is calling me! 📞','It’s 48 degrees outside, yalla!','Faster than Sheikh Zayed Road traffic, please!'],
+ calm:['🇦🇪 Salam alaikum!','🇰🇼 Shlonak? All good?','Habibi, take your time… but not too much','🇱🇧 Smells like my teta’s kitchen!','🇪🇬 Ya salam, what a stall!','One plate please!','I came all the way from Ajman!','Is this the famous stall?','🇮🇳 Ekdum fresh masala!','🇵🇭 Ang bango! (smells great!)','🇮🇹 Che profumo! (what a smell!)','🇬🇧 Smells brilliant!','🇯🇵 いい匂い！ (smells nice!)'],
+ wait:['Yalla habibi…','Shu fi? Still waiting…','I’m sooo hungry','Bas shway faster?','My karak is getting cold!','Is the chef on Dubai time?','Maybe today? 🙃','I left my car running…','🇫🇷 Toujours rien ? (still nothing?)','🇹🇷 Hadi ama! (come on!)','🇮🇳 Jaldi karo na! (hurry please!)','🇺🇸 Any day now, buddy!'],
+ cross:['Yallaaa! 😤','🇮🇳 Arre bhai, kitna time? 😩','🇵🇭 Ay, ang tagal! 😤','🇷🇺 Ну давай уже! 😤','Hurry up, habibi!','I’ll go to the next stall!','Khalas, I’m starving! 😩','Even Salik is faster than this!','I parked on the double yellow line!','My mother is calling me! 📞','It’s 48 degrees outside, yalla!','Faster than Sheikh Zayed Road traffic, please!','🇬🇧 This is not proper queuing!','🇮🇹 Mamma mia, che lentezza! 😩','🇧🇷 Que demora! (so slow!) 😩','🇪🇬 Ya amm, ana gayy men el sobh! (since morning!)'],
  vip:['Do you know who I am? 😎','My Lambo is double parked','Habibi, VIP means fast!','Gold service please ✨'],
- line:['Arre yaar, jaldi karo! (hurry up!)','Bilis, bilis! (quick, quick!)','Yalla, chalo chalo!','Vegam venam! (be quick!)','Yalla, my turn?','Ana awal wahid! I was first!','Excuse me, I was here before him','Haram, it’s so hot!','Save me a plate!','Is this the line for shawarma?','Wallah this queue…','Who’s next? Me? Inshallah']};
+ line:['🇮🇳 Arre yaar, jaldi karo! (hurry up!)','🇵🇭 Bilis, bilis! (quick, quick!)','Yalla, chalo chalo!','🇮🇳 Vegam venam! (be quick!)','Yalla, my turn?','🇦🇪 Ana awal wahid! I was first!','Excuse me, I was here before him','Phew, it’s so hot!','Save me a plate!','Is this the line for shawarma?','This queue is longer than a wedding buffet!','Who’s next? Me? Please?','🇬🇧 Lovely weather for a queue!','🇫🇷 Oh là là, la queue !','🇰🇪 Pole pole… (slowly slowly…)']};
 let lastSay=0,lastLine=0,fight=null,nextFight=Date.now()+45000;
-const CLAIM=[['يا أخي، أنا أول واحد!','Brother, I was first!'],['Arre bhai, line mein aao!','Hey bro, get in the line!'],['Hoy! Ako ang nauna!','Hey! I was first!'],['Enthaa? Njan aadyam vannu!','What? I came first!'],
- ['Эй, я первый стоял!','Hey, I was standing first!'],['آقا، نوبت منه!','Sir, it’s my turn!'],['Hé ! C’était mon tour !','Hey! It was my turn!'],['Sıra bende, kardeşim!','It’s my turn, brother!'],
- ['Wallah, you cut the line!',''],['Main pehle aaya tha, yaar!','I came first, man!'],['Ana el awel, fahem?','I’m first, understand?'],['Excuse me, I was here since Ramadan!','']];
-const COMEBACK=[['Shu? Mish sahih!','What? Not true!'],['Chup kar, yaar!','Shut up, man!'],['Ay naku! Ang kulit mo!','Oh my! You’re so annoying!'],['Chumma irikku, machane!','Just stay quiet, bro!'],
- ['Да ладно! Ни за что!','Come on! No way!'],['Boro baba!','Get lost, man!'],['N’importe quoi !','Nonsense!'],['Hadi ya, olmaz!','Come on, no way!'],
- ['Ya akhi, I was standing here!',''],['Arre, tu kaun hai?!','Hey, who are you?!'],['Yalla, go back!',''],['Your cousin left an hour ago!','']];
-const FIGHT=[['I was here first!','No, I was!'],['Wallah, you cut the line!','Ya akhi, I was standing here!'],['This is MY shawarma!','Says who?!'],['My cousin saved my spot!','Your cousin left an hour ago!'],['Move back, habibi!','You move back!'],['Who are you calling slow?!','You, ya Abu Shanab!']];
-const CALM=[['Khalas, khalas…','OK, enough…'],['Theek hai, theek hai','OK, OK'],['Sige na nga…','Fine then…'],['Shari, shari','OK, OK'],['Ладно, ладно…','Fine, fine…'],['Tamam, tamam','OK, OK'],['Allah yesamhak','May God forgive you'],['D’accord, vas-y','OK, go ahead'],['Sorry, habibi','']];
+const CLAIM=[['🇦🇪 يا أخي، أنا أول واحد!','Bro, I was first!'],['🇸🇦 Ya akhi, dori ana!','Bro, it’s my turn!'],['🇪🇬 Ya amm, ana wa’ef hena men badri!','I’ve been standing here forever!'],['🇱🇧 Ya habibi, ana awwal wahed!','My dear, I’m first!'],
+ ['🇮🇳 Arre bhai, main pehle aaya tha!','Bro, I came first!'],['🇮🇳 Njan aadyam vannu, machane!','I came first, buddy!'],['🇵🇰 Bhai jaan, meri baari hai!','Brother, it’s my turn!'],['🇧🇩 Bhai, ami age eshechi!','Brother, I came first!'],
+ ['🇵🇭 Hoy! Ako ang nauna!','Hey! I was first!'],['🇳🇵 Dai, ma pahile aaye!','Brother, I came first!'],['🇷🇺 Эй, я первый стоял!','Hey, I was here first!'],['🇮🇷 آقا، نوبت منه!','Sir, it’s my turn!'],
+ ['🇹🇷 Sıra bende, kardeşim!','My turn, brother!'],['🇫🇷 Hé ! C’est mon tour !','Hey! It’s my turn!'],['🇮🇹 Mamma mia, tocca a me!','Mamma mia, it’s my turn!'],['🇪🇸 ¡Oye, yo estaba primero!','Hey, I was first!'],
+ ['🇬🇧 Excuse me, there IS a queue!',''],['🇺🇸 Dude, I’ve been here forever!',''],['🇨🇳 我先来的！','I came first!'],['🇰🇪 Jamani, nilifika kwanza!','Come on, I got here first!'],
+ ['🇳🇬 Abeg, na me first come!','Please, I came first!'],['🇧🇷 Ei, eu cheguei primeiro!','Hey, I got here first!'],['🇩🇪 Entschuldigung, ich war zuerst da!','Excuse me, I was here first!'],['🇲🇦 Khoya, ana li jit lowel!','Bro, I came first!']];
+const COMEBACK=[['🇸🇦 La la, ana gablak!','No no, I was before you!'],['🇪🇬 Mesh ma’oul! Ana hena men el sobh!','No way! I’ve been here since morning!'],['🇱🇧 Ma ba’ref, bas ana kamen jou’an!','Maybe, but I’m hungry too!'],['🇮🇳 Arre yaar, my auntie saved my spot!',''],
+ ['🇵🇰 Bhai, aaram se! Sab ko milega!','Bro, relax! Everyone gets some!'],['🇵🇭 Ay naku! Gutom na ako!','Oh my! I’m so hungry!'],['🇷🇺 Да ладно! Я тоже хочу!','Come on! I want some too!'],['🇫🇷 Non non, après moi !','No no, after me!'],
+ ['🇹🇷 Hadi ya, ben de açım!','Come on, I’m hungry too!'],['🇮🇹 Ma dai! Ho fame anch’io!','Come on! I’m hungry too!'],['🇪🇸 ¡Qué va! ¡Tengo hambre!','No way! I’m hungry!'],['🇬🇧 I’ve been queuing since breakfast!',''],
+ ['🇺🇸 Bro, I’m on my lunch break!',''],['🇨🇳 我也饿了！','I’m hungry too!'],['🇯🇵 すみません、私が先です！','Excuse me, I’m first!'],['🇰🇷 제가 먼저 왔어요!','I came first!'],
+ ['🇧🇩 Bhai, ektu dhoirjo!','Brother, a little patience!'],['🇲🇦 Wakha, walakin ana jit lowel!','OK, but I came first!'],['🇧🇷 Calma, tem tempero pra todo mundo!','Relax, there’s spice for everyone!'],['🇳🇬 Abeg, I dey hungry o!','Please, I’m hungry!'],
+ ['🇩🇪 Ich warte schon ewig!','I’ve been waiting forever!'],['🇰🇪 Hapana, mimi kwanza!','No, me first!'],['🇮🇳 Kya baat hai, line toh dekho!','Look at the line, man!'],['🇦🇪 Yalla, kil wahed b dora!','Come on, everyone in turn!']];
+const FIGHT=[['I was here first!','No, I was!'],['This is MY shawarma!','Says who?!'],['My cousin saved my spot!','Your cousin went home an hour ago!'],['Move back, habibi!','You move back!'],['My karak is getting cold!','Mine is already cold!'],['I came from Ajman for this!','I came from Al Ain!']];
+const CALM=[['🇦🇪 Khalas, khalas…','OK, enough…'],['🇮🇳 Theek hai, theek hai','OK, OK'],['🇵🇭 Sige na nga…','Fine then…'],['🇪🇬 Mashi, mashi','OK, OK'],['🇷🇺 Ладно, ладно…','Fine, fine…'],['🇹🇷 Tamam, tamam','OK, OK'],
+ ['🇫🇷 D’accord, vas-y','OK, go ahead'],['🇬🇧 Lovely, after you!',''],['🇮🇹 Va bene, prego!','OK, after you!'],['🇪🇸 Vale, vale','OK, OK'],['🇯🇵 どうぞ！','After you!'],['🇰🇪 Sawa, sawa','OK, OK'],
+ ['🇵🇰 Chalo, theek hai','OK, fine'],['🇱🇧 Tayyeb habibi','OK, my dear'],['🇧🇷 Tudo bem!','All good!'],['🇳🇬 No wahala!','No problem!'],['🇩🇪 Na gut, bitte!','Alright, please!'],['🇨🇳 好吧好吧','OK, OK'],['Sorry, habibi','']];
 function startFight(){if(S.duel||!S.queue||S.queue.length<2)return;const q=$('queue');if(!q||!q.offsetParent)return;
   const a=Math.floor(Math.random()*(S.queue.length-1));const c1=pick(CLAIM);let r1=pick(COMEBACK),c2=pick(CLAIM),r2=pick(COMEBACK);let g=0;while(c2===c1&&g++<9)c2=pick(CLAIM);g=0;while(r2===r1&&g++<9)r2=pick(COMEBACK);
   fight={a,b:a+1,start:Date.now(),lines:[c1,r1,c2,r2],said:0};renderQueue();sfx.no();buzz(30);
@@ -721,7 +729,7 @@ const STALLS=[
   {n:'Glasses for the tea',c:950,perk:'tip',say:'Two stalls alive. One more, and the old caravan route is ours again.'}]},
  {name:'Saeed Baharat, Istanbul',steps:[
   {n:'Hang a mosaic lamp',c:150,perk:'wait',say:'The Grand Bazaar, habibi. My father sold saffron here before I was born.'},
-  {n:'Lay a kilim',c:260,perk:'tip',say:'A kilim from Konya. Every pattern is a prayer for good trade.'},
+  {n:'Lay a kilim',c:260,perk:'tip',say:'A kilim from Konya. Every pattern is a wish for good trade.'},
   {n:'Copper coffee pot',c:380,perk:'tip',say:'Turkish coffee, thick and sweet. Serve it with a smile.'},
   {n:'Hanging herbs',c:520,perk:'wait',say:'Sumac, pul biber, mint. The bazaar has never smelled better.'},
   {n:'Brass scale',c:680,perk:'tip',say:'The same scale design my father used. Weigh true.'},
@@ -734,7 +742,7 @@ function stall(){return STALLS[Math.min(S.souk||0,STALLS.length-1)]}
 function builtN(){return Math.min(S.built||0,8)}
 function perkWait(){return stall().steps.slice(0,builtN()).filter(x=>x.perk==='wait').length*15}
 function perkTip(){return stall().steps.slice(0,builtN()).filter(x=>x.perk==='tip').length*.05}
-const THANKS=['Shukran!','Perfect!','Just like my mother’s!','Best stall here!','Wallah, delicious!','Smells amazing!','I’ll be back!'];
+const THANKS=['Shukran!','Perfect!','Just like my mother’s!','Best stall here!','Yummy, delicious!','Smells amazing!','I’ll be back!','🇮🇳 Dhanyavaad!','🇵🇭 Salamat po!','🇫🇷 Merci !','🇹🇷 Teşekkürler!','🇮🇹 Grazie mille!','🇪🇸 ¡Gracias!','🇯🇵 ありがとう！','🇰🇪 Asante sana!'];
 function decoCount(){return Math.min(DECOR.length,S.level-1)}
 function renderStall(newest){
   const n=builtN(),st=stall();let h='';
