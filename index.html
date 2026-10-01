@@ -818,4 +818,11 @@ renderMute();renderStall();render();
 
 /* no zoom on a double tap or a pinch: this is a game, taps must stay taps */
 ['gesturestart','gesturechange','dblclick'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+/* iOS Safari ignores user-scalable=no, so a quick second tap still zooms. Swallow it and deliver the tap ourselves. */
+let lastTouchEnd=0;
+document.addEventListener('touchend',e=>{const now=Date.now();const t=e.target;
+  if(now-lastTouchEnd<350&&!(t.closest&&t.closest('input,textarea,select'))){e.preventDefault();
+    if(!(t.closest&&t.closest('.board')))t.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));}
+  lastTouchEnd=now;},{passive:false});
+document.addEventListener('touchstart',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
 </script>
