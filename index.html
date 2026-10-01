@@ -1,5 +1,16 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Spice Souk</title>
+<meta name="description" content="Merge spices, serve the souk, and restore Grandfather's stall. A free puzzle game you play in your browser.">
+<meta property="og:title" content="Spice Souk">
+<meta property="og:description" content="Merge spices, serve the souk, restore Grandfather's stall. Play free in your browser.">
+<meta property="og:image" content="https://okhathak.github.io/spice-souk/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:url" content="https://okhathak.github.io/spice-souk/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#5a1c14">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Spice Souk">
+<link rel="icon" type="image/png" href="icon.png"><link rel="apple-touch-icon" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap">
 <style>
@@ -76,7 +87,7 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .tiprow{display:flex;align-items:center;gap:7px;padding:6px 12px;flex:none;min-height:56px}
 .tip{flex:1;min-width:0;font-size:12.5px;color:var(--cream);line-height:1.35;border-radius:12px;padding:4px 8px;transition:background .3s}
 .tip.news{position:relative;z-index:40;background:#4a2a14;rgba(255,226,138,.16);box-shadow:inset 0 0 0 1px rgba(255,226,138,.35);animation:pop .35s cubic-bezier(.2,1.6,.4,1)}
-.tip.news b{display:block;color:#ffe28a;font-size:14px}
+.tip.news b{color:#ffe28a;font-size:14px}
 .chest{flex:none;width:60px;min-height:48px;border-radius:14px;background:rgba(0,0,0,.3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:3px 0;position:relative}
 .chest svg{width:32px;height:26px}
 .chest small{font-family:var(--display);font-size:12px;font-weight:600;color:var(--muted)}
@@ -354,7 +365,7 @@ body.duel #crateBtn{display:none}
   <div class="sheet" id="shop" hidden><div class="card">
     <h2>Shop</h2>
     <div class="shoprow"><div><b>Better spice</b><br><small id="sackInfo"></small></div><button class="btn warm" id="upBtn" type="button"></button></div>
-    <div class="shoprow"><div><b>Free energy</b><br><small>Watch a short ad for +15 energy</small></div><button class="btn" id="adBtn" type="button">Watch</button></div>
+    <div class="shoprow"><div><b>Tea break</b><br><small>Rest for 3 seconds for +15 energy</small></div><button class="btn" id="adBtn" type="button">Rest</button></div>
     <div class="shoprow"><div><b>Daily gift</b><br><small id="dailyInfo"></small></div></div>
     <div class="shoprow"><div><b>Sound</b><br><small>Music and effects</small></div><button class="btn" id="muteBtn" type="button" aria-label="Sound on"><svg style="width:20px;height:20px;vertical-align:-4px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path id="wave" d="M16 8a5 5 0 0 1 0 8"/></svg><span id="muteTxt">Sound</span></button></div>
     <div class="shoprow"><div><b>Start over</b><br><small>Wipes your stall and coins</small></div><button class="btn" id="resetBtn" type="button">Reset</button></div>
@@ -384,7 +395,7 @@ body.duel #crateBtn{display:none}
     <div class="rwlist" id="rwList"></div>
     <button class="btn warm" type="button" id="rwBtn" style="width:100%">Keep selling</button>
   </div></div>
-  <div class="adbox" id="adbox" hidden><div><b style="font-size:22px">Ad would play here</b><div id="adCount">3</div></div></div>
+  <div class="adbox" id="adbox" hidden><div><b style="font-size:22px">☕ Tea break…</b><div id="adCount">3</div></div></div>
 </div>
 <div class="fx" id="fx"></div>
 
@@ -424,7 +435,7 @@ const LOOK={
  'Zeynep':{w:'long',sk:'#ebbd98',cl:'#4f79a8',hair:'#2a1a12'},'Emre':{w:'hair',sk:'#d1a07a',cl:'#8a6a3a',hair:'#3b2a1e',beard:1},'Ayşe':{w:'hijab',sk:'#e6b994',cl:'#6b4e8a',hc:'#9b7bc0'},
  'Jaddi Saeed':{w:'ghutra',sk:'#b98560',cl:'#f4f1ea',beard:1,old:1,white:1}};
 function lookOf(name){return LOOK[name]||{w:'hair',sk:'#c99a73',cl:'#6b8e4e',hair:'#2a1b12'}}
-function patience(o){const p=(o&&o.vip?.6:1);return{calm:(25+perkWait())*p,wait:(50+perkWait())*p,gone:(90+perkWait())*p}}
+function patience(o){const hard=o&&o.n?Math.max(...o.n)+(o.n.length-1)*.5:0,p=(o&&o.vip?.6:1)*(1+.4*hard);return{calm:(25+perkWait())*p,wait:(50+perkWait())*p,gone:(90+perkWait())*p}}
 function moodOf(o){if(o.happy)return'happy';const w=(Date.now()-(o.t||Date.now()))/1000,P=patience(o);return w<P.calm?'calm':w<P.wait?'wait':'cross'}
 function paused(){return document.hidden||S.duel||S.guide==null||S.guide<3||[...document.querySelectorAll('.sheet,.celebrate')].some(x=>!x.hidden)}
 function walkouts(){if(paused()){S.orders.forEach(o=>{if(o&&o.t)o.t+=1000});return}
@@ -451,7 +462,7 @@ function personSVG(name,mood,bg){const L=lookOf(name),sk=L.sk;let back='',front=
   const lines=L.old?`<path d="M14.6 19.6 L15.6 19.9 M25.4 19.6 L24.4 19.9" stroke="#8a5a3a" stroke-width=".6"/>`:'';
   return `<svg viewBox="0 0 40 40" aria-hidden="true"><defs><pattern id="chk" width="2.4" height="2.4" patternUnits="userSpaceOnUse"><rect width="2.4" height="2.4" fill="#fbfaf6"/><rect width="1.2" height="1.2" fill="#c03a2b"/><rect x="1.2" y="1.2" width="1.2" height="1.2" fill="#c03a2b"/></pattern></defs>
    <circle cx="20" cy="20" r="20" fill="${bg||'#f0dcbc'}"/>${back}${body}<rect x="17.6" y="24" width="4.8" height="5" fill="${sk}"/><ellipse cx="20" cy="17" rx="7.4" ry="8.4" fill="${sk}"/>${lines}${cheeks}${beard}${eyes}${brows}<path d="${mouth}" stroke="#5a2414" stroke-width="1.2" fill="none" stroke-linecap="round"/>${front}${sweat}</svg>`}
-const COLS=4,ROWS=5,N=COLS*ROWS,EMAX=30,EREGEN=15000;
+const COLS=4,ROWS=5,N=COLS*ROWS,EMAX=40,EREGEN=7000;
 const SACK_UP=[{p:.15,cost:120},{p:.3,cost:300},{p:.45,cost:700},{p:.6,cost:null}];
 
 const $=id=>document.getElementById(id);
@@ -514,7 +525,7 @@ function potSVG(t){
 function jarHTML(t,mini){return `<div class="jar${mini?' mini':''}" style="--tc:${POTS[t][0]}">${potSVG(t)}${mini?'':`<span class="tier">${t+1}</span>`}</div>`}
 function soukIdx(){return Math.min(S.souk||0,SOUKS.length-1)}
 function xpNeed(){return 20+S.level*15}
-function maxTier(){return S.duel?4:Math.min(MAX,2+S.level)}
+function maxTier(){return S.duel?4:Math.min(MAX,2+Math.floor((S.level-1)/2))}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function counts(){const c={};S.cells.forEach(t=>{if(t!=null)c[t]=(c[t]||0)+1});return c}
 function canServe(o){const c=counts(),need={};o.n.forEach(t=>need[t]=(need[t]||0)+1);return Object.keys(need).every(t=>(c[t]||0)>=need[t])}
@@ -524,8 +535,8 @@ function newOrder(){
     const names=S.orders.concat(S.queue||[]).map(o=>o&&o.who),people=SOUKS[0].people.filter(p=>!names.includes(p));return {d:x.d,n:x.n.slice(),who:pick(people.length?people:SOUKS[0].people),col:pick(FACES),fresh:true}}
   let pool=DISHES.filter(x=>x.n.every(t=>t<=mt)&&!taken.includes(x.d));
   // lean toward harder dishes as you level
-  pool.sort(()=>Math.random()-.5);pool.sort((a,b)=>Math.max(...b.n)-Math.max(...a.n));
-  const x=pool[Math.floor(Math.random()*Math.min(pool.length,5))]||DISHES[1];
+  pool.sort(()=>Math.random()-.5);if(Math.random()<.5)pool.sort((a,b)=>Math.max(...b.n)-Math.max(...a.n));
+  const x=pool[Math.floor(Math.random()*Math.min(pool.length,4))]||DISHES[1];
   const names=S.orders.concat(S.queue||[]).map(o=>o&&o.who),people=SOUKS[soukIdx()].people.filter(p=>!names.includes(p));
   return {d:x.d,n:x.n.slice(),who:pick(people.length?people:SOUKS[soukIdx()].people),col:pick(FACES),fresh:true};
 }
@@ -611,14 +622,14 @@ const CHEST=5;
    Each part costs coins, is drawn on the stall, says a line from Jaddi Saeed, and gives a perk. */
 const STALLS=[
  {name:'Saeed & Sons',steps:[
-  {n:'Hang the brass lantern',c:40,perk:'wait',say:'I lit this lantern every evening for forty years. Now the souk can see us again.'},
-  {n:'Lay Grandmother’s rug',c:80,perk:'tip',say:'Your grandmother carried this rug from Isfahan. People will stop to sit and talk.'},
-  {n:'Polish the dallah',c:140,perk:'tip',say:'No guest leaves without coffee. That is the rule of this stall.'},
-  {n:'Hang fresh herbs',c:200,perk:'wait',say:'Herbs at the front. Let the smell bring them in from the street.'},
-  {n:'Fix the copper scale',c:300,perk:'tip',say:'An honest scale. Never short a customer, not by one gram.'},
-  {n:'Paint the old sign',c:400,perk:'tip',say:'Saeed & Sons, since 1962. Now the name is yours too.'},
-  {n:'Cushions for guests',c:520,perk:'wait',say:'Cushions for the old men who come every day to argue about cardamom.'},
-  {n:'Tea glasses for all',c:650,perk:'tip',say:'Tea for everyone. The stall is alive again, habibi. I am proud of you.'}]},
+  {n:'Hang the brass lantern',c:60,perk:'wait',say:'I lit this lantern every evening for forty years. Now the souk can see us again.'},
+  {n:'Lay Grandmother’s rug',c:130,perk:'tip',say:'Your grandmother carried this rug from Isfahan. People will stop to sit and talk.'},
+  {n:'Polish the dallah',c:220,perk:'tip',say:'No guest leaves without coffee. That is the rule of this stall.'},
+  {n:'Hang fresh herbs',c:330,perk:'wait',say:'Herbs at the front. Let the smell bring them in from the street.'},
+  {n:'Fix the copper scale',c:460,perk:'tip',say:'An honest scale. Never short a customer, not by one gram.'},
+  {n:'Paint the old sign',c:620,perk:'tip',say:'Saeed & Sons, since 1962. Now the name is yours too.'},
+  {n:'Cushions for guests',c:800,perk:'wait',say:'Cushions for the old men who come every day to argue about cardamom.'},
+  {n:'Tea glasses for all',c:1000,perk:'tip',say:'Tea for everyone. The stall is alive again, habibi. I am proud of you.'}]},
  {name:'Dar Saeed, Marrakech',steps:[
   {n:'Hang a copper lamp',c:90,perk:'wait',say:'A letter from Jaddi: my old friend Youssef kept a corner of the medina for us. Light it up.'},
   {n:'Lay a Berber rug',c:160,perk:'tip',say:'Red and saffron, like the rugs in Fes. Customers will feel at home.'},
@@ -637,6 +648,8 @@ const STALLS=[
   {n:'Gold-leaf sign',c:860,perk:'tip',say:'Three cities, one name.'},
   {n:'Silk cushions',c:1050,perk:'wait',say:'Let the merchants sit. Stories are half of this trade.'},
   {n:'Tulip tea glasses',c:1300,perk:'tip',say:'Deira, Marrakech, Istanbul. You did what I could not. Shukran, my child.'}]}];
+STALLS.forEach((st,k)=>st.steps.forEach(x=>x.c=Math.round(x.c*[3.5,3.5,3][k]/10)*10)); // tuned by an automated 40-minute playtest
+STALLS[0].steps[0].c=60;STALLS[0].steps[1].c=250; // the first fix comes quickly, so a new player feels it
 function stall(){return STALLS[Math.min(S.souk||0,STALLS.length-1)]}
 function builtN(){return Math.min(S.built||0,8)}
 function perkWait(){return stall().steps.slice(0,builtN()).filter(x=>x.perk==='wait').length*15}
@@ -711,10 +724,10 @@ function sack(){
   audio();idleReset();
   if(S.duel){const empty=S.cells.map((v,i)=>v==null?i:-1).filter(i=>i>=0);if(!empty.length){sfx.no();shake();setTip('Tray full. Merge or serve.');return}
     const i=pick(empty),t=S.srng()<.3?1:0;S.cells[i]=t;sfx.drop();render();mark(i,'drop');return}
-  if(S.energy<=0){sfx.no();toast('<b>Out of energy</b>It refills over time, or watch an ad in the Shop.');return}
+  if(S.energy<=0){sfx.no();toast('<b>Out of energy</b>It refills by itself, 1 every 7 seconds. Or take a tea break in the Shop.');return}
   const empty=S.cells.map((v,i)=>v==null?i:-1).filter(i=>i>=0);
   if(!empty.length){sfx.no();shake();setTip('Your tray is full. Merge or serve to make room.');return}
-  const i=pick(empty);const t=Math.random()<SACK_UP[S.sackLv].p?1:0;
+  const i=pick(empty);const r=Math.random();const t=S.level>=4&&r<.08?2:r<SACK_UP[S.sackLv].p?1:0;
   if(S.energy===EMAX)S.eAt=Date.now();
   S.energy--;S.cells[i]=t;if(S.guide===0)S.guide=1;sfx.drop();render();mark(i,'drop');
   setTip(`You got <b>${SPICES[t].n}</b>. Find another to merge.`);
@@ -768,7 +781,7 @@ function serve(k,el){
     setTimeout(()=>{if(S!==st)return;const sv=S;S=st;nextCustomer(k);S=sv;render()},700);setTip(S.combo>1?'Combo! Keep serving.':`${S.served} served. Keep going!`);return}
   flyCoins(el,Math.min(10,2+Math.floor(pay/12)),()=>{st.coins+=pay;if(S===st){renderTop();save()}});
   flyStar(el,o.n.length);
-  if(S.guide===2){S.guide=3;guide();setTimeout(()=>{toast('<b>You\'ve got it!</b>Keep matching and serving. Five stars open a gift chest.',3600);setTimeout(daily,4000)},1200)}
+  if(S.guide===2){S.guide=3;guide();setTimeout(()=>{toast('<b>You\'ve got it!</b>Earn coins, then tap the hammer to restore Grandfather\'s stall.',4200);setTimeout(daily,4000)},1200)}
   S.xp+=xp;
   setTimeout(()=>{if(S!==st)return;el.classList.add('leave');setTimeout(()=>{if(S!==st)return;nextCustomer(k);levelCheck();render()},320)},800);
   setTip(S.combo>1?`Combo! Serve again within 15 seconds to keep it going.`:`${o.who} loved the ${o.d}. ${S.served} customers served.`);
@@ -845,11 +858,11 @@ function renderShop(){const cur=SACK_UP[S.sackLv],nx=SACK_UP[S.sackLv+1];
   $('sackInfo').textContent=`${Math.round(cur.p*100)}% chance of a Chili instead of Cumin`+(nx?` → ${Math.round(nx.p*100)}%`:' (max)');
   const u=$('upBtn');u.innerHTML=cur.cost?`${cur.cost} coins`:'Maxed';u.disabled=!cur.cost||S.coins<cur.cost;
   if(S.adDay!==today()){S.adDay=today();S.ads=0}
-  $('adBtn').disabled=S.ads>=5;$('adBtn').textContent=S.ads>=5?'Back tomorrow':`Watch (${5-S.ads} left)`;
+  $('adBtn').disabled=S.ads>=5;$('adBtn').textContent=S.ads>=5?'Back tomorrow':`Rest (${5-S.ads} left)`;
   $('dailyInfo').textContent=S.daily===today()?'Collected today. Next gift tomorrow.':'Open the game tomorrow for a gift.'}
 $('shopBtn').onclick=()=>{renderShop();openSheet('shop')};
 $('upBtn').onclick=()=>{const c=SACK_UP[S.sackLv].cost;if(!c||S.coins<c)return;S.coins-=c;S.sackLv++;sfx.level();renderShop();render();toast('<b>Better spice</b>More Chili each time you get spice.')};
-$('adBtn').onclick=()=>{if(S.ads>=5)return;$('adbox').hidden=false;let n=3;$('adCount').textContent=n;const t=setInterval(()=>{n--;$('adCount').textContent=n;if(n<=0){clearInterval(t);$('adbox').hidden=true;S.ads++;S.energy+=15;sfx.level();renderShop();render();toast('<b>+15 energy</b>Thanks for watching.')}},1000)};
+$('adBtn').onclick=()=>{if(S.ads>=5)return;$('adbox').hidden=false;let n=3;$('adCount').textContent=n;const t=setInterval(()=>{n--;$('adCount').textContent=n;if(n<=0){clearInterval(t);$('adbox').hidden=true;S.ads++;S.energy+=15;sfx.level();renderShop();render();toast('<b>+15 energy</b>Back to the stall, refreshed.')}},1000)};
 let resetArm=false;
 $('resetBtn').onclick=()=>{if(!resetArm){resetArm=true;$('resetBtn').textContent='Tap again';setTimeout(()=>{resetArm=false;$('resetBtn').textContent='Reset'},3000);return}
   S=fresh();S.intro=true;S.daily=today();renderStall();[0,0,0,1,0,2].forEach((t,k)=>S.cells[[5,6,9,10,13,14][k]]=t);while(S.orders.length<3)S.orders.push(newOrder());$('shop').hidden=true;render()};
