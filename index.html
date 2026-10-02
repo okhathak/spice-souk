@@ -661,6 +661,19 @@ const VTXT={
  "Yaar, jaldi karo!":[["ur","یار، جلدی کرو!"],["hi","यार, जल्दी करो!"]],"Bhai jaan, meri baari hai!":[["ur","بھائی جان، میری باری ہے!"],["hi","भाई जान, मेरी बारी है!"]],
  "Bhai, aaram se! Sab ko milega!":[["ur","بھائی، آرام سے! سب کو ملے گا!"],["hi","भाई, आराम से! सब को मिलेगा!"]],"Chalo, theek hai":[["ur","چلو، ٹھیک ہے"],["hi","चलो, ठीक है"]],
  "Taratari koren!":[["bn","তাড়াতাড়ি করেন!"]],"Bhai, ami age eshechi!":[["bn","ভাই, আমি আগে এসেছি!"]],"Bhai, ektu dhoirjo!":[["bn","ভাই, একটু ধৈর্য!"]],"Accha, thik ache":[["bn","আচ্ছা, ঠিক আছে"]]};
+/* recorded voices (Microsoft neural, made once on GitHub by tools/make-voices.py): a man's and a woman's voice per nationality, and the accent each uses for English */
+const EDGE={ae:['ar-AE-HamdanNeural','ar-AE-FatimaNeural'],sa:['ar-SA-HamedNeural','ar-SA-ZariyahNeural'],kw:['ar-KW-FahedNeural','ar-KW-NouraNeural'],eg:['ar-EG-ShakirNeural','ar-EG-SalmaNeural'],lb:['ar-LB-RamiNeural','ar-LB-LaylaNeural'],ma:['ar-MA-JamalNeural','ar-MA-MounaNeural'],
+ in:['hi-IN-MadhurNeural','hi-IN-SwaraNeural'],pk:['ur-PK-AsadNeural','ur-PK-UzmaNeural'],bd:['bn-BD-PradeepNeural','bn-BD-NabanitaNeural'],ph:['fil-PH-AngeloNeural','fil-PH-BlessicaNeural'],gb:['en-GB-RyanNeural','en-GB-SoniaNeural'],us:['en-US-GuyNeural','en-US-JennyNeural'],
+ ru:['ru-RU-DmitryNeural','ru-RU-SvetlanaNeural'],cn:['zh-CN-YunxiNeural','zh-CN-XiaoxiaoNeural'],ke:['sw-KE-RafikiNeural','sw-KE-ZuriNeural'],fr:['fr-FR-HenriNeural','fr-FR-DeniseNeural'],es:['es-ES-AlvaroNeural','es-ES-ElviraNeural'],de:['de-DE-ConradNeural','de-DE-KatjaNeural'],
+ br:['pt-BR-AntonioNeural','pt-BR-FranciscaNeural'],ng:['en-NG-AbeoNeural','en-NG-EzinneNeural'],it:['it-IT-DiegoNeural','it-IT-ElsaNeural'],tr:['tr-TR-AhmetNeural','tr-TR-EmelNeural'],ir:['fa-IR-FaridNeural','fa-IR-DilaraNeural'],jp:['ja-JP-KeitaNeural','ja-JP-NanamiNeural'],kr:['ko-KR-InJoonNeural','ko-KR-SunHiNeural']};
+const EDGE_ML=['ml-IN-MidhunNeural','ml-IN-SobhanaNeural'];
+const EDGE_EN={in:['en-IN-PrabhatNeural','en-IN-NeerjaNeural'],pk:['en-IN-PrabhatNeural','en-IN-NeerjaNeural'],bd:['en-IN-PrabhatNeural','en-IN-NeerjaNeural'],ke:['en-KE-ChilembaNeural','en-KE-AsiliaNeural'],ph:['en-PH-JamesNeural','en-PH-RosaNeural']};
+/* which recording a line needs: the text the voice reads, and the voice. tools/voice-lines.cjs runs this same code, so the game and the recorder always agree */
+function vClean(txt){return String(txt).replace(/^\S+\s/,'').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}️]/gu,'').replace(/’/g,"'").trim()}
+function clipFor(who,t,gloss){const c=cOf(who),k=femaleOf(who)?1:0;if(!EDGE[c])return null;
+  const alt=(VTXT[t]||[])[0];if(alt)return {voice:(alt[0]==='ml'?EDGE_ML:EDGE[c])[k],text:alt[1]};          // its own script
+  if(!gloss&&EDGE_EN[c])return {voice:EDGE_EN[c][k],text:t};                                                   // English, in their accent
+  return {voice:EDGE[c][k],text:t}}
 const SCRIPT=[[/[؀-ۿ]/,'ar'],[/[Ѐ-ӿ]/,'ru'],[/[぀-ヿ]/,'ja'],[/[가-힯]/,'ko'],[/[一-鿿]/,'zh'],[/[ऀ-ॿ]/,'hi'],[/[ঀ-৿]/,'bn'],[/[ഀ-ൿ]/,'ml']];
 /* voices that are sound effects, not people (desktop Safari/Chrome ship a few) */
 const NOVELTY=/bells|bubbles|zarvox|bad news|good news|jester|trinoids|whisper|wobble|boing|cellos|organ|superstar|bahh|albert|junior|ralph|deranged|hysterical|pipe/i;
@@ -668,7 +681,7 @@ const FEM=/samantha|karen|moira|tessa|kate|serena|fiona|veena|laila|lana|amélie
 const MASC=/daniel|rishi|maged|tarik|alex|fred|aaron|arthur|gordon|oliver|thomas|jorge|juan|diego|luca|yuri|otoya|reed|rocko|eddy|grandpa|xander|hattori|majed|male|man\b|david|mark|george|ravi|hemant|stefan|pablo|cosimo|tolga|pavel|ichiro|kangkang|prabhat|naayf|hamed|asad|bashkar|madhur|salman/i;
 let vList=[],vOk=false;const VS=window.speechSynthesis;
 function vLoad(){try{vList=(VS?VS.getVoices():[]).filter(v=>!NOVELTY.test(v.name))}catch(e){vList=[]}}if(VS){vLoad();VS.onvoiceschanged=vLoad}
-function vUnlock(){if(vOk||!VS)return;vOk=true;try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;VS.speak(u)}catch(e){}}
+function vUnlock(){vManifest();if(vOk||!VS)return;vOk=true;try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;VS.speak(u)}catch(e){}}
 function femaleOf(who){const L=LOOK[who]||{};return ['shayla','hijab','long'].includes(L.w)}
 function seedOf(who){return [...String(who)].reduce((a,ch)=>a*31+ch.charCodeAt(0)>>>0,7)}
 /* a voice for this person in this language: an exact accent first, then the language; a woman's or man's voice where the phone says which; always the same one for the same person */
@@ -676,8 +689,16 @@ function vPick(tag,who,exact){const n=x=>x.lang.replace('_','-').toLowerCase(),t
   let c=t.includes('-')?vList.filter(v=>n(v)===t):[];if(!c.length&&!exact)c=vList.filter(v=>n(v)===b||n(v).startsWith(b+'-'));if(!c.length)return null;
   const f=femaleOf(who),g=c.filter(v=>(f?FEM:MASC).test(v.name));const pool=g.length?g:c.filter(v=>!(f?MASC:FEM).test(v.name)).length?c.filter(v=>!(f?MASC:FEM).test(v.name)):c;
   return pool[seedOf(who)%pool.length]}
-function voiceLine(who,txt,o,gloss){o=o||{};if(!VS||S.muted||S.voiceOff||S.duel||document.hidden||!txt)return;
-  const t=String(txt).replace(/^\S+\s/,'').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}️]/gu,'').replace(/’/g,"'").trim();if(!t)return;
+let VMAN=null,vClip=null,vQ=[];
+function vManifest(){if(VMAN)return;VMAN={};fetch('voices/manifest.json',{cache:'no-cache'}).then(r=>r.ok?r.json():{}).then(m=>{VMAN=m||{}}).catch(()=>{})}
+function playClip(file,who,o){const a=new Audio('voices/'+file);a.volume=o.angry?.45:.38;a.preservesPitch=false;a.mozPreservesPitch=false;a.webkitPreservesPitch=false;
+  a.playbackRate=.94+(seedOf(who)%7)*.02+(o.angry?.03:0);                                              // two men from one country never sound quite the same
+  const go=()=>{vClip=a;a.onended=()=>{vClip=null;const n=vQ.shift();if(n)n()};a.play().catch(()=>{vClip=null})};
+  if(o.queue&&vClip&&!vClip.ended)vQ.push(go);else{if(vClip)try{vClip.pause()}catch(e){}vQ.length=0;try{VS&&VS.cancel()}catch(e){}go()}}
+function voiceLine(who,txt,o,gloss){o=o||{};if(S.muted||S.voiceOff||S.duel||document.hidden||!txt)return;
+  const t=vClean(txt);if(!t)return;
+  const cl=clipFor(who,t,gloss),f=cl&&VMAN&&VMAN[cl.voice+'|'+cl.text];if(f){playClip(f,who,o);return}  // a real recording when there is one
+  if(!VS)return;
   const c=cOf(who),native=VLANG[c]||'en-GB';let say=t,v=null,tags;
   for(const [lg,nt] of VTXT[t]||[]){v=vPick(lg===native.split('-')[0]?native:lg,who);if(v){say=nt;break}}   // its own script, its own voice
   if(!v){const sc=SCRIPT.find(([re])=>re.test(t));
@@ -1062,9 +1083,9 @@ let resetArm=false;
 $('resetBtn').onclick=()=>{if(!resetArm){resetArm=true;$('resetBtn').textContent='Tap again';setTimeout(()=>{resetArm=false;$('resetBtn').textContent='Reset'},3000);return}
   S=fresh();S.intro=true;S.daily=today();renderStall();[0,0,0,1,0,2].forEach((t,k)=>S.cells[[5,6,9,10,13,14][k]]=t);while(S.orders.length<3)S.orders.push(newOrder());$('shop').hidden=true;render()};
 function renderVoice(){const b=$('voiceBtn');if(!b)return;b.textContent=S.voiceOff?'Off':'On';b.setAttribute('aria-pressed',S.voiceOff?'false':'true')}
-$('voiceBtn').onclick=()=>{S.voiceOff=!S.voiceOff;if(S.voiceOff&&window.speechSynthesis)speechSynthesis.cancel();audio();renderVoice();save()};
+$('voiceBtn').onclick=()=>{S.voiceOff=!S.voiceOff;if(S.voiceOff){if(window.speechSynthesis)speechSynthesis.cancel();if(vClip)vClip.pause()}audio();renderVoice();save()};
 function renderMute(){renderVoice();$('muteTxt').textContent=S.muted?'Muted':'Sound';$('wave').style.display=S.muted?'none':'';$('muteBtn').setAttribute('aria-label',S.muted?'Sound off':'Sound on')}
-$('muteBtn').onclick=()=>{S.muted=!S.muted;if(S.muted&&window.speechSynthesis)speechSynthesis.cancel();audio();renderMute();save();if(!S.muted)sfx.pick()};
+$('muteBtn').onclick=()=>{S.muted=!S.muted;if(S.muted){if(window.speechSynthesis)speechSynthesis.cancel();if(vClip)vClip.pause()}audio();renderMute();save();if(!S.muted)sfx.pick()};
 /* ---------- souk duel: same tray, same customers, 90 seconds ---------- */
 const DUEL_S=90,COUNT_MS=3000;
 let room=null,droom=null,duel=null,MAIN=null,matchT=null,unPeers=null;
