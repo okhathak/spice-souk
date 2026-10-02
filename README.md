@@ -8,7 +8,7 @@ A merge-and-serve puzzle game set in an Arabic spice market. Games Lab, started 
   Cumin → Chili → Turmeric → Loomi → Cardamom → Cinnamon → Sumac → Saffron → Rose) → serve
   customers the spices their dish needs → coins, stars, levels.
 - **Rewards:** combo within 15s, a souk chest every 5 stars, a stall decoration per level,
-  new souks at level 4 (Marrakech) and 7 (Istanbul), daily gift, spice book with real facts.
+  new souks at level 4 (the Lantern Medina) and 7 (the Bazaar of Domes), daily gift, spice book with real facts.
 - **Placeholders:** the "watch an ad" button is a 3-second stand-in; progress saves in the
   browser only.
 
@@ -38,6 +38,6 @@ Tap **Duel → Play a challenge round**. After 90 seconds, put your name in and 
 
 ## Purpose, stakes and daily goals (added 2026-10-01)
 
-- **Restore Jaddi Saeed's stall.** The hammer button (top right) opens the stall: 8 parts to restore with coins, each drawn on the stall, each with a line from Jaddi Saeed and a perk (customers wait longer, or tip more). Restore all 8 to travel on: Deira, then Marrakech, then Istanbul.
+- **Restore Jaddi Saeed's stall.** The hammer button (top right) opens the stall: 8 parts to restore with coins, each drawn on the stall, each with a line from Jaddi Saeed and a perk (customers wait longer, or tip more). Restore all 8 to travel on: the Old Spice Souq, then the Lantern Medina, then the Bazaar of Domes.
 - **Stakes.** Customers served while smiling tip 25% (more with perks); served while frowning they pay 25% less; left too long they walk out and the combo breaks. From level 3, an occasional VIP pays double but waits less. Patience pauses while a menu is open or the app is in the background.
 - **Daily goals.** The scroll shows three goals a day; finish all three for coins and energy, and a streak that grows the gift.
