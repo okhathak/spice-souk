@@ -401,6 +401,7 @@ body.duel #crateBtn{display:none}
     <div class="shoprow"><div><b>Tea break</b><br><small>Rest for 3 seconds for +15 energy</small></div><button class="btn" id="adBtn" type="button">Rest</button></div>
     <div class="shoprow"><div><b>Daily gift</b><br><small id="dailyInfo"></small></div></div>
     <div class="shoprow"><div><b>Sound</b><br><small>Music and effects</small></div><button class="btn" id="muteBtn" type="button" aria-label="Sound on"><svg style="width:20px;height:20px;vertical-align:-4px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path id="wave" d="M16 8a5 5 0 0 1 0 8"/></svg><span id="muteTxt">Sound</span></button></div>
+    <div class="shoprow"><div><b>Customer voices</b><br><small>Hear the line argue, quietly</small></div><button class="btn" id="voiceBtn" type="button" aria-pressed="true">On</button></div>
     <div class="shoprow"><div><b>Feedback</b><br><small>Tell Nasser what you think</small></div><button class="btn warm" id="fbOpen2" type="button">Send</button></div>
     <div class="shoprow"><div><b>Start over</b><br><small>Wipes your stall and coins</small></div><button class="btn" id="resetBtn" type="button">Reset</button></div>
     <button class="btn" type="button" data-close style="width:100%;margin-top:10px">Close</button>
@@ -648,7 +649,7 @@ function vFind(tags){const n=x=>x.lang.replace('_','-').toLowerCase();
   for(const t of tags){const b=t.toLowerCase().split('-')[0];const v=vList.find(v=>n(v)===b||n(v).startsWith(b+'-'));if(v)return v}return null}
 const ENACC={gb:'en-GB',us:'en-US',in:'en-IN',pk:'en-IN',bd:'en-IN',ng:'en-NG',ke:'en-KE',ph:'en-PH'};
 function femaleOf(who){const L=LOOK[who]||{};return ['shayla','hijab','long'].includes(L.w)}
-function voiceLine(who,txt,o,gloss){o=o||{};if(!VS||S.muted||S.duel||document.hidden||!txt)return;
+function voiceLine(who,txt,o,gloss){o=o||{};if(!VS||S.muted||S.voiceOff||S.duel||document.hidden||!txt)return;
   const t=String(txt).replace(/^\S+\s/,'').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}️]/gu,'').replace(/’/g,"'").trim();if(!t)return;
   const c=cOf(who),native=VLANG[c]||'en-GB';let tags;
   const sc=SCRIPT.find(([re])=>re.test(t));
@@ -660,7 +661,7 @@ function voiceLine(who,txt,o,gloss){o=o||{};if(!VS||S.muted||S.duel||document.hi
   const v=vFind(tags);if(!v&&sc)return;                                            // never let a voice spell out a script it cannot read
   try{if(!o.queue)VS.cancel();const u=new SpeechSynthesisUtterance(t);if(v){u.voice=v;u.lang=v.lang}else u.lang=tags[0];
     const f=femaleOf(who),h=[...String(who)].reduce((a,ch)=>a+ch.charCodeAt(0),0)%5/20;
-    u.pitch=Math.min(2,(f?1.25:.8)+h+(o.angry?.15:0));u.rate=o.angry?1.12:1;u.volume=o.angry?1:.85;VS.speak(u)}catch(e){}}
+    u.pitch=Math.min(2,(f?1.25:.8)+h+(o.angry?.15:0));u.rate=o.angry?1.12:1;u.volume=o.angry?.45:.38;VS.speak(u)}catch(e){}}
 let lastSay=0,lastLine=0,fight=null,nextFight=Date.now()+45000;
 
 
@@ -1029,7 +1030,9 @@ $('adBtn').onclick=()=>{if(S.ads>=5)return;$('adbox').hidden=false;let n=3;$('ad
 let resetArm=false;
 $('resetBtn').onclick=()=>{if(!resetArm){resetArm=true;$('resetBtn').textContent='Tap again';setTimeout(()=>{resetArm=false;$('resetBtn').textContent='Reset'},3000);return}
   S=fresh();S.intro=true;S.daily=today();renderStall();[0,0,0,1,0,2].forEach((t,k)=>S.cells[[5,6,9,10,13,14][k]]=t);while(S.orders.length<3)S.orders.push(newOrder());$('shop').hidden=true;render()};
-function renderMute(){$('muteTxt').textContent=S.muted?'Muted':'Sound';$('wave').style.display=S.muted?'none':'';$('muteBtn').setAttribute('aria-label',S.muted?'Sound off':'Sound on')}
+function renderVoice(){const b=$('voiceBtn');if(!b)return;b.textContent=S.voiceOff?'Off':'On';b.setAttribute('aria-pressed',S.voiceOff?'false':'true')}
+$('voiceBtn').onclick=()=>{S.voiceOff=!S.voiceOff;if(S.voiceOff&&window.speechSynthesis)speechSynthesis.cancel();audio();renderVoice();save()};
+function renderMute(){renderVoice();$('muteTxt').textContent=S.muted?'Muted':'Sound';$('wave').style.display=S.muted?'none':'';$('muteBtn').setAttribute('aria-label',S.muted?'Sound off':'Sound on')}
 $('muteBtn').onclick=()=>{S.muted=!S.muted;if(S.muted&&window.speechSynthesis)speechSynthesis.cancel();audio();renderMute();save();if(!S.muted)sfx.pick()};
 /* ---------- souk duel: same tray, same customers, 90 seconds ---------- */
 const DUEL_S=90,COUNT_MS=3000;
