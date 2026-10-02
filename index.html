@@ -404,7 +404,8 @@ body.duel #crateBtn{display:none}
     <div class="shoprow"><div><b>Tea break</b><br><small>Rest for 3 seconds for +15 energy</small></div><button class="btn" id="adBtn" type="button">Rest</button></div>
     <div class="shoprow"><div><b>Daily gift</b><br><small id="dailyInfo"></small></div></div>
     <div class="shoprow"><div><b>Sound</b><br><small>Music and effects</small></div><button class="btn" id="muteBtn" type="button" aria-label="Sound on"><svg style="width:20px;height:20px;vertical-align:-4px;margin-right:6px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9z"/><path id="wave" d="M16 8a5 5 0 0 1 0 8"/></svg><span id="muteTxt">Sound</span></button></div>
-    <div class="shoprow"><div><b>Customer voices</b><br><small>Hear the line argue, quietly</small></div><button class="btn" id="voiceBtn" type="button" aria-pressed="true">On</button></div>
+    <div class="shoprow"><div><b>Souk sounds</b><br><small>A calm market in the background</small></div><button class="btn" id="ambBtn" type="button" aria-pressed="true">On</button></div>
+    <div class="shoprow"><div><b>Customer voices</b><br><small>Customers arguing in the line</small></div><button class="btn" id="voiceBtn" type="button" aria-pressed="true">On</button></div>
     <div class="shoprow"><div><b>Feedback</b><br><small>Tell Nasser what you think</small></div><button class="btn warm" id="fbOpen2" type="button">Send</button></div>
     <div class="shoprow"><div><b>Start over</b><br><small>Wipes your stall and coins</small></div><button class="btn" id="resetBtn" type="button">Reset</button></div>
     <button class="btn" type="button" data-close style="width:100%;margin-top:10px">Close</button>
@@ -539,7 +540,7 @@ if(!S.cells.some(v=>v!=null)){[0,0,0,1,0,2].forEach((t,k)=>S.cells[[5,6,9,10,13,
 
 /* ---------- sound ---------- */
 let ac=null;
-function audio(){vUnlock();if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(ac&&ac.state==='suspended')ac.resume()}
+function audio(){vUnlock();if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(ac&&ac.state==='suspended')ac.resume();ambience()}
 function tone(f,d=.12,type='sine',g=.18,delay=0,slide=0){if(S.muted||!ac)return;const t=ac.currentTime+delay,o=ac.createOscillator(),v=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(f*slide,t+d);v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+.01);v.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(v).connect(ac.destination);o.start(t);o.stop(t+d+.02)}
 const SCALE=[392,440,523,587,659,784,880,1047,1175,1319];
 const sfx={
@@ -689,12 +690,25 @@ function vPick(tag,who,exact){const n=x=>x.lang.replace('_','-').toLowerCase(),t
   let c=t.includes('-')?vList.filter(v=>n(v)===t):[];if(!c.length&&!exact)c=vList.filter(v=>n(v)===b||n(v).startsWith(b+'-'));if(!c.length)return null;
   const f=femaleOf(who),g=c.filter(v=>(f?FEM:MASC).test(v.name));const pool=g.length?g:c.filter(v=>!(f?MASC:FEM).test(v.name)).length?c.filter(v=>!(f?MASC:FEM).test(v.name)):c;
   return pool[seedOf(who)%pool.length]}
-let VMAN=null,vClip=null,vQ=[];
+let VMAN=null,vSrc=null,vQ=[],vGen=0,amb=null;const vBuf=new Map(),AMB_VOL=.3;
 function vManifest(){if(VMAN)return;VMAN={};fetch('voices/manifest.json',{cache:'no-cache'}).then(r=>r.ok?r.json():{}).then(m=>{VMAN=m||{}}).catch(()=>{})}
-function playClip(file,who,o){const a=new Audio('voices/'+file);a.volume=o.angry?.45:.38;a.preservesPitch=false;a.mozPreservesPitch=false;a.webkitPreservesPitch=false;
-  a.playbackRate=.94+(seedOf(who)%7)*.02+(o.angry?.03:0);                                              // two men from one country never sound quite the same
-  const go=()=>{vClip=a;a.onended=()=>{vClip=null;const n=vQ.shift();if(n)n()};a.play().catch(()=>{vClip=null})};
-  if(o.queue&&vClip&&!vClip.ended)vQ.push(go);else{if(vClip)try{vClip.pause()}catch(e){}vQ.length=0;try{VS&&VS.cancel()}catch(e){}go()}}
+/* every voice and the background go through Web Audio: an iPhone ignores an audio element's volume, so a gain node is the only way to keep them low */
+function vLoadBuf(url){if(!vBuf.has(url))vBuf.set(url,fetch(url).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((res,rej)=>ac.decodeAudioData(b,res,rej))).catch(e=>{vBuf.delete(url);throw e}));return vBuf.get(url)}
+function vStop(){vGen++;vQ.length=0;if(vSrc)try{vSrc.stop()}catch(e){}vSrc=null;try{VS&&VS.cancel()}catch(e){}}
+function playClip(file,who,o){if(!ac)return;if(!o.queue)vStop();const g=vGen;
+  vLoadBuf('voices/'+file).then(buf=>{if(g!==vGen)return;
+    const go=()=>{if(g!==vGen||S.muted||S.voiceOff)return;const src=ac.createBufferSource();src.buffer=buf;
+      src.playbackRate.value=.94+(seedOf(who)%7)*.02+(o.angry?.03:0);                                   // two men from one country never sound quite the same
+      const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3600;                         // a little further away, in the line, not in your ear
+      const gn=ac.createGain();gn.gain.value=o.angry?.26:.2;src.connect(lp).connect(gn).connect(ac.destination);
+      vSrc=src;src.onended=()=>{if(vSrc===src)vSrc=null;const n=vQ.shift();if(n)n()};src.start()};
+    if(o.queue&&vSrc)vQ.push(go);else go()}).catch(()=>{})}
+/* the calm souk underneath everything: a far crowd, tea glasses, an oud. Follows Sound and its own switch */
+function ambience(){if(!ac)return;const on=!S.muted&&!S.ambOff&&!document.hidden;
+  if(on&&!amb){amb={g:ac.createGain()};amb.g.gain.value=0;amb.g.connect(ac.destination);const me=amb;
+    vLoadBuf('sounds/souk.mp3').then(buf=>{if(amb!==me)return;const src=ac.createBufferSource();src.buffer=buf;src.loop=true;src.loopStart=.08;src.loopEnd=buf.duration-.08;src.connect(me.g);src.start(0,.08);me.s=src;ambience()}).catch(()=>{if(amb===me)amb=null})}
+  if(amb){const t=ac.currentTime;amb.g.gain.cancelScheduledValues(t);amb.g.gain.setValueAtTime(amb.g.gain.value,t);amb.g.gain.linearRampToValueAtTime(on&&amb.s?AMB_VOL:0,t+(on?2.5:.4))}}
+document.addEventListener('visibilitychange',()=>ambience());
 function voiceLine(who,txt,o,gloss){o=o||{};if(S.muted||S.voiceOff||S.duel||document.hidden||!txt)return;
   const t=vClean(txt);if(!t)return;
   const cl=clipFor(who,t,gloss),f=cl&&VMAN&&VMAN[cl.voice+'|'+cl.text];if(f){playClip(f,who,o);return}  // a real recording when there is one
@@ -711,7 +725,7 @@ function voiceLine(who,txt,o,gloss){o=o||{};if(S.muted||S.voiceOff||S.duel||docu
   try{if(!o.queue)VS.cancel();const u=new SpeechSynthesisUtterance(say);if(v){u.voice=v;u.lang=v.lang}
     const f=femaleOf(who),h=seedOf(who)%5/25,vf=v&&FEM.test(v.name),vm=v&&MASC.test(v.name);
     const base=f?(vf?1:vm?1.4:1.25):(vm?1:vf?.7:.8);                               // a woman given only a man's voice is lifted, and the other way round
-    u.pitch=Math.min(2,base+h-.08+(o.angry?.12:0));u.rate=o.angry?1.1:1;u.volume=o.angry?.45:.38;VS.speak(u)}catch(e){}}
+    u.pitch=Math.min(2,base+h-.08+(o.angry?.12:0));u.rate=o.angry?1.1:1;u.volume=o.angry?.3:.25;VS.speak(u)}catch(e){}}
 let lastSay=0,lastLine=0,fight=null,nextFight=Date.now()+45000;
 
 
@@ -1082,10 +1096,12 @@ $('adBtn').onclick=()=>{if(S.ads>=5)return;$('adbox').hidden=false;let n=3;$('ad
 let resetArm=false;
 $('resetBtn').onclick=()=>{if(!resetArm){resetArm=true;$('resetBtn').textContent='Tap again';setTimeout(()=>{resetArm=false;$('resetBtn').textContent='Reset'},3000);return}
   S=fresh();S.intro=true;S.daily=today();renderStall();[0,0,0,1,0,2].forEach((t,k)=>S.cells[[5,6,9,10,13,14][k]]=t);while(S.orders.length<3)S.orders.push(newOrder());$('shop').hidden=true;render()};
-function renderVoice(){const b=$('voiceBtn');if(!b)return;b.textContent=S.voiceOff?'Off':'On';b.setAttribute('aria-pressed',S.voiceOff?'false':'true')}
-$('voiceBtn').onclick=()=>{S.voiceOff=!S.voiceOff;if(S.voiceOff){if(window.speechSynthesis)speechSynthesis.cancel();if(vClip)vClip.pause()}audio();renderVoice();save()};
+function renderAmb(){const b=$('ambBtn');if(!b)return;b.textContent=S.ambOff?'Off':'On';b.setAttribute('aria-pressed',S.ambOff?'false':'true')}
+$('ambBtn').onclick=()=>{S.ambOff=!S.ambOff;audio();renderAmb();save()};
+function renderVoice(){renderAmb();const b=$('voiceBtn');if(!b)return;b.textContent=S.voiceOff?'Off':'On';b.setAttribute('aria-pressed',S.voiceOff?'false':'true')}
+$('voiceBtn').onclick=()=>{S.voiceOff=!S.voiceOff;if(S.voiceOff)vStop();audio();renderVoice();save()};
 function renderMute(){renderVoice();$('muteTxt').textContent=S.muted?'Muted':'Sound';$('wave').style.display=S.muted?'none':'';$('muteBtn').setAttribute('aria-label',S.muted?'Sound off':'Sound on')}
-$('muteBtn').onclick=()=>{S.muted=!S.muted;if(S.muted){if(window.speechSynthesis)speechSynthesis.cancel();if(vClip)vClip.pause()}audio();renderMute();save();if(!S.muted)sfx.pick()};
+$('muteBtn').onclick=()=>{S.muted=!S.muted;if(S.muted)vStop();ambience();audio();renderMute();save();if(!S.muted)sfx.pick()};
 /* ---------- souk duel: same tray, same customers, 90 seconds ---------- */
 const DUEL_S=90,COUNT_MS=3000;
 let room=null,droom=null,duel=null,MAIN=null,matchT=null,unPeers=null;

@@ -50,3 +50,7 @@ When two customers argue in the line, you hear them, each in their own language 
 
 Fight lines are now real recordings made with Microsoft's free neural voices: a man's and a woman's voice for each nationality, in its own dialect (Emirati, Saudi, Kuwaiti, Egyptian, Lebanese and Moroccan Arabic; Hindi, Urdu, Bengali, Malayalam, Filipino, Swahili, Nigerian English, Persian and the rest), and English lines in the speaker's accent where one exists. `tools/voice-lines.cjs` lists every line using the game's own code, `tools/make-voices.py` records the missing ones with `edge-tts`, and `.github/workflows/voices.yml` runs both on GitHub whenever the game changes, committing `voices/*.mp3` and `voices/manifest.json`. Any line without a recording falls back to the phone's own voices. Note: `edge-tts` uses Microsoft Edge's read-aloud service, which is not an officially licensed API.
 
+### Souk background (added 2026-10-02)
+
+A calm market plays underneath the game: a far crowd murmur (built from the game's own recorded voices, blurred until no word can be understood), tea glasses clinking now and then, and a distant oud in maqam Hijaz. It is a 45-second seamless loop (`sounds/souk.mp3`, made by `tools/make-ambience.py`). **Shop → Souk sounds** turns it off; **Sound** silences everything. Voices and the background go through Web Audio gain nodes, because iPhones ignore an audio element's volume, which is what kept the fight voices loud.
+
