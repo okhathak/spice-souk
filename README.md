@@ -22,7 +22,7 @@ and delete this folder when that exists.
 
 ## Souk duel (added 2026-09-30)
 
-Tap **Duel**: one player starts a duel and gets a 4-digit code, friends join with it, and everyone plays the same tray and the same customers for 90 seconds. The winner gets +80 coins, everyone else +20. Live duels need the game opened in claude.ai (it uses the artifact `room` capability); opened as a local file or on GitHub Pages, only **Practise alone** works.
+Tap **Duel**: one player starts a duel and gets a 4-digit code, friends join with it, and everyone plays the same tray and the same customers for 90 seconds. The winner gets +80 coins, everyone else +20. Live duels now work straight from the public link (updated 2026-10-02): the host taps **Start a duel → Send invite link**, friends open the link (`?duel=<code>`) and tap **Join**, up to 6 players. Phones connect to each other directly over WebRTC using [PeerJS](https://peerjs.com) (MIT, vendored as `peerjs.min.js`) and its free public signalling server; no account, no scores stored anywhere. A very strict network (some office or hotel Wi-Fi) can block the direct connection — mobile data usually works. Inside claude.ai the artifact `room` capability is used instead.
 
 ## Restock crate (added 2026-09-30)
 
@@ -30,7 +30,7 @@ Every 4 customers served, a spice crate arrives (the crate button pulses beside 
 
 ## Play online
 
-https://okhathak.github.io/spice-souk/ (GitHub Pages, served from `main`). Solo play works there; live duels need the game opened inside claude.ai.
+https://okhathak.github.io/spice-souk/ (GitHub Pages, served from `main`). Solo play and live duels both work there.
 
 ## Challenge a friend (added 2026-10-01)
 

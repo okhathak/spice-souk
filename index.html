@@ -1110,12 +1110,67 @@ function showChallenge(c){S.intro=true;if(S.guide==null||S.guide<3)S.guide=3;$('
   $('duelSheet').hidden=false;try{history.replaceState(null,'',location.pathname)}catch(e){}}
 function ordinal(n){return n+(n%10===1&&n!==11?'st':n%10===2&&n!==12?'nd':n%10===3&&n!==13?'rd':'th')}
 
+/* ---------- live duels on the public site ----------
+   A tiny room over PeerJS: the phones talk to each other directly (WebRTC); the free PeerJS server only introduces them.
+   The host's phone keeps the table of players and sends it to everyone. Same interface as the Claude room, so the match code is shared. */
+let pendingCode='';
+function loadPeerJS(){return window.Peer?Promise.resolve():new Promise((res,rej)=>{const s=document.createElement('script');s.src='peerjs.min.js';s.onload=res;s.onerror=()=>rej({code:'load'});document.head.appendChild(s)})}
+function peerOpts(){const q=new URLSearchParams(location.search),h=q.get('peerhost');return h?{host:h,port:+(q.get('peerport')||9000),path:'/',secure:false,debug:0}:{debug:0}}
+const PEER_PREFIX='spicesouk-v1-',MAX_PLAYERS=6;
+function cleanPres(p,fromHost){p=p||{};const o={nick:String(p.nick||'Player').replace(/[<>]/g,'').slice(0,20),pts:Math.max(0,Math.min(1e6,+p.pts||0)),served:Math.max(0,Math.min(1e4,+p.served||0)),fin:!!p.fin,go:typeof p.go==='string'?p.go.slice(0,12):null,host:false};
+  if(fromHost){o.host=!!p.host;if(typeof p.seed==='number')o.seed=p.seed|0;if(typeof p.startAt==='number')o.startAt=p.startAt}return o}
+const peerRoom={join(name,asHost){return loadPeerJS().then(()=>new Promise((resolve,reject)=>{
+  const code=String(name).replace(/^souk-/,''),hostId=PEER_PREFIX+code;
+  const st={me:null,isHost:!!asHost,table:new Map(),cbs:new Set(),closes:new Set(),conns:new Map(),conn:null,offset:0,mine:{},closed:false,settled:false};
+  const peer=asHost?new Peer(hostId,peerOpts()):new Peer(peerOpts());
+  const fire=()=>st.cbs.forEach(f=>{try{f()}catch(e){}});
+  const close=()=>{if(st.closed)return;st.closed=true;try{peer.destroy()}catch(e){}st.closes.forEach(f=>{try{f()}catch(e){}})};
+  const send=(c,m)=>{try{if(c&&c.open)c.send(m)}catch(e){}};
+  const table=()=>({type:'table',t:Date.now(),peers:[...st.table]});
+  const broadcast=()=>{const m=table();st.conns.forEach(c=>send(c,m))};
+  const api={
+    presence(p){Object.assign(st.mine,p);st.table.set(st.me,cleanPres(st.mine,st.isHost));if(st.isHost)broadcast();else send(st.conn,{type:'p',p:st.mine});fire();return Promise.resolve()},
+    peers(){return [...st.table].map(([id,p])=>{const q={...p};if(!st.isHost&&id!==st.me&&typeof q.startAt==='number')q.startAt-=st.offset;return{peer:id,sameTab:id===st.me,presence:q}})},
+    onPeers(cb,onClose){st.cbs.add(cb);if(onClose)st.closes.add(onClose);return()=>{st.cbs.delete(cb);if(onClose)st.closes.delete(onClose)}},
+    leave(){st.closes.clear();st.cbs.clear();close();return Promise.resolve()}};
+  const done=(ok,err)=>{if(st.settled)return;st.settled=true;clearTimeout(timer);if(ok)resolve(api);else{try{peer.destroy()}catch(e){}reject(err)}};
+  const timer=setTimeout(()=>done(false,{code:'timeout'}),15000);
+  peer.on('error',e=>{const t=e&&e.type;if(!st.settled)done(false,{code:t==='unavailable-id'?'taken':t==='peer-unavailable'?'nohost':'net'});else if(t==='network'||t==='server-error')fire()});
+  peer.on('disconnected',()=>{if(!st.closed&&st.isHost){try{peer.reconnect()}catch(e){}}});
+  peer.on('open',id=>{st.me=id;
+    if(st.isHost){
+      peer.on('connection',c=>{
+        if(st.conns.size>=MAX_PLAYERS-1){c.on('open',()=>{send(c,{type:'full'});setTimeout(()=>c.close(),300)});return}
+        st.conns.set(c.peer,c);
+        c.on('open',()=>send(c,table()));
+        c.on('data',d=>{if(d&&d.type==='p'){st.table.set(c.peer,cleanPres(d.p,false));broadcast();fire()}});
+        c.on('close',()=>{st.conns.delete(c.peer);st.table.delete(c.peer);broadcast();fire()});
+      });
+      done(true);
+    }else{
+      const c=peer.connect(hostId,{reliable:true});st.conn=c;
+      c.on('open',()=>{done(true);send(c,{type:'p',p:st.mine})});
+      c.on('data',d=>{if(!d)return;if(d.type==='full'){done(false,{code:'full'});close();return}
+        if(d.type==='table'){st.offset=d.t-Date.now();const m=new Map(d.peers);if(st.me&&m.has(st.me))m.set(st.me,cleanPres(st.mine,false));st.table=m;fire()}});
+      c.on('close',()=>{if(st.settled)close();else done(false,{code:'nohost'})});
+    }});
+}))}};
+function inviteLink(code){return location.origin+location.pathname+'?duel='+code}
+async function shareInvite(){if(!duel||!duel.code)return;const url=inviteLink(duel.code),text=`Duel me in Spice Souk! Code ${duel.code}`;
+  try{if(navigator.share){await navigator.share({title:'Spice Souk duel',text,url});return}}catch(e){if(e&&e.name==='AbortError')return}
+  try{await navigator.clipboard.writeText(text+' '+url);dmsg='Invite link copied. Paste it to your friends.'}catch(e){dmsg=url}renderDuelSheet()}
+
 /* rooms */
 async function joinCode(code,asHost){
   if(!room)return;const nick=($('nickIn')&&$('nickIn').value.trim().slice(0,20))||myNick();S.nick=nick;save();
-  try{if(droom){try{await droom.leave()}catch(e){}}
-    droom=await room.join('souk-'+code);
-  }catch(e){droom=null;dmsg=e&&e.code==='limit_reached'?'Too many rooms open. Try again in a moment.':'Could not join that duel. Check the code and try again.';renderDuelSheet();return}
+  if(droom){try{await droom.leave()}catch(e){}droom=null}
+  dmsg=asHost?'Opening a duel…':'Joining…';renderDuelSheet();
+  for(let tries=0;;tries++){
+    try{droom=await room.join('souk-'+code,asHost);break}
+    catch(e){droom=null;const c=e&&e.code;
+      if(c==='taken'&&asHost&&tries<3){code=String(1000+Math.floor(Math.random()*9000));continue}
+      dmsg=c==='limit_reached'?'Too many rooms open. Try again in a moment.':c==='nohost'?'No duel with that code right now. Check the 4 numbers, or ask your friend to open the duel first.':c==='full'?'That duel is full (6 players).':'Could not connect. Check your internet and try again.';
+      renderDuelSheet();return}}
   duel={code,seen:false};dmsg='';
   droom.presence({nick,host:!!asHost,go:null,pts:0,served:0,fin:false}).catch(()=>{});
   if(unPeers)unPeers();unPeers=droom.onPeers(onPeersChange,()=>{droom=null;duel=null;renderDuelSheet()});
@@ -1148,30 +1203,34 @@ function renderDuelSheet(){
     b.innerHTML=`<label class="dlabel" for="nickIn">Your name in the duel</label><input class="field" id="nickIn" maxlength="20" value="${nick}" autocomplete="nickname">
       <button class="btn warm dfull" id="hostBtn" type="button">Start a duel</button>
       <div class="or">or join a friend</div>
-      <div class="drow"><input class="field" id="codeIn" inputmode="numeric" maxlength="4" placeholder="4-digit code" aria-label="Duel code"><button class="btn" id="joinBtn" type="button">Join</button></div>
+      <div class="drow"><input class="field" id="codeIn" inputmode="numeric" maxlength="4" placeholder="4-digit code" aria-label="Duel code" value="${esc(pendingCode)}"><button class="btn${pendingCode?' warm':''}" id="joinBtn" type="button">Join</button></div>
       ${dmsg?`<p class="dnote">${esc(dmsg)}</p>`:''}
-      <button class="btn dfull" id="pracBtn" type="button" style="background:#e8d3ad;color:#4a2412">Practise alone</button>`;
+      <button class="btn dfull" id="pracBtn" type="button" style="background:#e8d3ad;color:#4a2412">Not at the same time? Play a round and send a challenge link</button>`;
     $('hostBtn').onclick=()=>{audio();joinCode(String(1000+Math.floor(Math.random()*9000)),true)};
-    $('joinBtn').onclick=()=>{audio();const c=$('codeIn').value.trim();if(!/^\d{4}$/.test(c)){dmsg='The code is 4 numbers.';renderDuelSheet();return}joinCode(c,false)};
+    $('joinBtn').onclick=()=>{audio();const c=$('codeIn').value.trim();pendingCode='';if(!/^\d{4}$/.test(c)){dmsg='The code is 4 numbers.';renderDuelSheet();return}joinCode(c,false)};
     $('codeIn').onkeydown=e=>{if(e.key==='Enter')$('joinBtn').click()};
     $('pracBtn').onclick=practice;return;
   }
   const ps=droom.peers(),host=amHost(),h=hostPeer();
   const rows=ps.map(p=>{const n=String((p.presence&&p.presence.nick)||'Joining…').slice(0,20);return `<div><span class="dot" style="background:${colorOf(p.peer)}"></span>${esc(p.sameTab?n+' (you)':n)}<small>${p.presence&&p.presence.host?'host':''}</small></div>`}).join('');
   b.innerHTML=`<div class="dnote" style="text-align:center;margin-bottom:0">Duel code</div><div class="dcode">${esc(duel.code)}</div>
-    <p class="dnote" style="text-align:center">Friends tap <b>Duel</b>, then <b>Join</b> with this code.</p>
+    <p class="dnote" style="text-align:center">Send your friends the link, or they tap <b>Duel</b> and <b>Join</b> with this code.</p>
+    ${host?'<button class="btn dfull" id="invBtn" type="button">📲 Send invite link</button>':''}
     <div class="plist">${rows}</div>
     ${dmsg?`<p class="dnote">${esc(dmsg)}</p>`:''}
     ${host?`<button class="btn warm dfull" id="goBtn" type="button">${ps.length>1?`Start the match (${ps.length} players)`:'Start (just you so far)'}</button>`
           :`<p class="dnote" style="text-align:center">Waiting for ${esc(String(h&&h.presence&&h.presence.nick||'the host').slice(0,20))} to start…</p>`}
     <button class="btn dfull" id="leaveBtn" type="button" style="background:#e8d3ad;color:#4a2412">Leave the duel</button>`;
   if(host)$('goBtn').onclick=()=>{audio();dmsg='';startMatch()};
+  if($('invBtn'))$('invBtn').onclick=shareInvite;
   $('leaveBtn').onclick=leaveDuel;
 }
 function practice(){audio();const seed=Math.floor(Math.random()*2**31);duel={seed};beginMatch(seed,Date.now()+COUNT_MS,null)}
 $('duelBtn').onclick=()=>{renderDuelSheet();openSheet('duelSheet')};
 const _rw=$('rwBtn').onclick;$('rwBtn').onclick=()=>{_rw();if(duel&&duel.after&&duel.retry){const c=duel.retry;duel.after=false;setTimeout(()=>playChallenge(c),300);return}if(duel&&duel.after){duel.after=false;if(droom)setTimeout(()=>{renderDuelSheet();openSheet('duelSheet')},300)}};
 {const c=readChallenge();if(c)setTimeout(()=>showChallenge(c),300)}
+{const dc=new URLSearchParams(location.search).get('duel');if(/^\d{4}$/.test(dc||'')){pendingCode=dc;setTimeout(()=>{S.intro=true;if(S.guide==null||S.guide<3)S.guide=3;$('intro').hidden=true;save();dmsg='Your friend invited you to a live duel. Type your name and tap Join.';renderDuelSheet();openSheet('duelSheet');try{history.replaceState(null,'',location.pathname+location.search.replace(/[?&]duel=\d{4}/,'').replace(/^&/,'?'))}catch(e){}},300)}}
+room=peerRoom;
 (async()=>{try{if(window.claude&&typeof window.claude.use==='function'){room=await window.claude.use('room');
   if(!S.nick){const u=await window.claude.use('user');if(u){const me=await u.me();if(me&&me.name){S.nick=me.name.split(' ')[0].slice(0,20);save()}}}}}catch(e){room=null}
   if(!$('duelSheet').hidden)renderDuelSheet()})();
