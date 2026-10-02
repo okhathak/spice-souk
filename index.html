@@ -332,7 +332,7 @@ body.duel #crateBtn{display:none}
 </defs></svg>
 <div class="app" id="app">
   <div class="top">
-    <div class="souk"><b id="soukName">Deira Spice Souk</b><div class="xpbar"><i id="xp"></i></div><span class="lvl" id="lvl">Level 1</span></div>
+    <div class="souk"><b id="soukName">Dubai Spice Souq</b><div class="xpbar"><i id="xp"></i></div><span class="lvl" id="lvl">Level 1</span></div>
     <button class="info" id="infoBtn" type="button" aria-label="How to play">i</button>
     <div class="chip" id="coinChip"><span class="coin"></span><span id="coins">0</span></div>
     <div class="chip" id="energyChip"><span class="bolt"></span><span id="energy">30</span><small id="etimer"></small></div>
@@ -379,7 +379,7 @@ body.duel #crateBtn{display:none}
 
   <div class="sheet intro" id="intro"><div class="card">
     <h2>Welcome to the souk</h2>
-    <div class="letter"><div class="lface" id="introFace"></div><div><small>A letter from Jaddi Saeed</small><p>“My child, I opened this spice stall in Deira in 1962. Now my hands are tired and the stall is falling apart. Will you bring it back to life, so our family name stays in the souk?”</p></div></div>
+    <div class="letter"><div class="lface" id="introFace"></div><div><small>A letter from Jaddi Saeed</small><p>“My child, I opened this spice stall in the souq in 1962. Now my hands are tired and the stall is falling apart. Will you bring it back to life, so our family name stays in the souk?”</p></div></div>
     <div class="steps">
       <div><span>1</span><p>Tap <b>Get spice</b> to add a spice to your tray.</p></div>
       <div><span>2</span><p>Match <b>two of the same</b> to make a better one.</p></div>
@@ -476,7 +476,7 @@ const DISHES=[
  {d:'Mahalabia',n:[4,8]},{d:'Rose tea',n:[8]},{d:'Loomi soup',n:[3]},{d:'Umm Ali',n:[5,4]},{d:'Saffron rice',n:[7]}
 ];
 const SOUKS=[
- {n:'Deira Spice Souk',at:1,people:['Umm Saeed','Khalid','Mariam','Rashid','Aisha','Hamdan','Noura','Raju','Priya','Imran','Joy','Rahim','Sophie','Olga','Amr','Rami','Wei','Otieno']},
+ {n:'Dubai Spice Souq',at:1,people:['Umm Saeed','Khalid','Mariam','Rashid','Aisha','Hamdan','Noura','Raju','Priya','Imran','Joy','Rahim','Sophie','Olga','Amr','Rami','Wei','Otieno']},
  {n:'Marrakech Medina',at:4,people:['Youssef','Fatima','Karim','Salma','Omar','Leila','Pierre','Lucía','Hans','Lucas','Chidi','Giulia']},
  {n:'Istanbul Grand Bazaar',at:7,people:['Mehmet','Elif','Can','Zeynep','Emre','Ayşe','Shirin','Yuki','Min-jun','Mike','Dmitri']}
 ];
@@ -749,7 +749,7 @@ const STALLS=[
   {n:'Brass scale',c:680,perk:'tip',say:'The same scale design my father used. Weigh true.'},
   {n:'Gold-leaf sign',c:860,perk:'tip',say:'Three cities, one name.'},
   {n:'Silk cushions',c:1050,perk:'wait',say:'Let the merchants sit. Stories are half of this trade.'},
-  {n:'Tulip tea glasses',c:1300,perk:'tip',say:'Deira, Marrakech, Istanbul. You did what I could not. Shukran, my child.'}]}];
+  {n:'Tulip tea glasses',c:1300,perk:'tip',say:'Dubai, Marrakech, Istanbul. You did what I could not. Shukran, my child.'}]}];
 STALLS.forEach((st,k)=>st.steps.forEach(x=>x.c=Math.round(x.c*[3.5,3.5,3][k]/10)*10)); // tuned by an automated 40-minute playtest
 STALLS[0].steps[0].c=60;STALLS[0].steps[1].c=250; // the first fix comes quickly, so a new player feels it
 function stall(){return STALLS[Math.min(S.souk||0,STALLS.length-1)]}
@@ -788,9 +788,9 @@ function build(){const st=stall(),n=builtN(),x=st.steps[n];if(!x||S.coins<x.c)re
   S.coins-=x.c;S.built=n+1;sfx.level();goal('build');renderStall(n);render();$('stallSheet').hidden=true;
   celebrate({art:`<div style="width:96px;height:96px;margin:auto">${DECOR[n].s}</div>`,title:x.n+'!',text:`“${x.say}” — Jaddi Saeed`,
     list:[x.perk==='wait'?'Customers will wait 15 seconds longer':'Customers tip 5% more',`${n+1} of 8 restored`],btn:n+1>=8?'See the stall':'Keep selling'});
-  if(n+1>=8){const END=[['Jaddi is back at his stall!','For the first time in years, Jaddi stands behind his counter in Deira. “It smells just like the day I opened it. Our name is back in the souk.”'],
+  if(n+1>=8){const END=[['Jaddi is back at his stall!','For the first time in years, Jaddi stands behind his counter in the souq. “It smells just like the day I opened it. Our name is back in the souk.”'],
       ['Jaddi visits Marrakech!','Jaddi flies to Marrakech and his old friend Youssef runs to hug him. “Two stalls, two cities, one family.”'],
-      ['Jaddi’s dream came true','Deira, Marrakech, Istanbul. Jaddi hands you his old brass key. “The caravan road is ours again. The stall is yours now, my child.”']][S.souk]||[];
+      ['Jaddi’s dream came true','Dubai, Marrakech, Istanbul. Jaddi hands you his old brass key. “The caravan road is ours again. The stall is yours now, my child.”']][S.souk]||[];
     celebrate({art:`<div style="width:110px;height:110px;margin:auto;border-radius:50%;background:#ead2a8;overflow:hidden;box-shadow:0 0 0 4px #ffd66b,0 0 30px rgba(255,214,107,.8)">${personSVG('Jaddi Saeed','happy')}</div>`,title:END[0],text:END[1],list:['8 of 8 restored · 8 new memories in Jaddi’s book'],btn:S.souk<STALLS.length-1?'See the stall':'Keep selling'});
     setTimeout(()=>{renderStallSheet()},10)}}
 $('travelBtn').onclick=()=>{if(builtN()<8||S.souk>=STALLS.length-1)return;S.souk++;S.built=0;$('stallSheet').hidden=true;
