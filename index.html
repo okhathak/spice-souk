@@ -206,6 +206,8 @@ button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 @keyframes mergepop{0%{transform:scale(.5) rotate(-12deg)}55%{transform:scale(1.35) rotate(6deg)}100%{transform:scale(1)}}
 .spot{position:fixed;z-index:39;pointer-events:none;border-radius:18px;box-shadow:0 0 0 200vmax rgba(10,4,1,.68),0 0 0 3px rgba(255,214,120,.9),0 0 22px 4px rgba(255,200,90,.55);transition:left .25s,top .25s,width .25s,height .25s}
 .spot[hidden]{display:none}
+.skipTut{position:fixed;z-index:41;right:12px;top:calc(env(safe-area-inset-top,0px) + 10px);min-height:44px;padding:0 16px;border:0;border-radius:22px;background:var(--cream);color:var(--ink);font:700 14px var(--body);box-shadow:0 4px 12px rgba(0,0,0,.4);display:flex;align-items:center;gap:6px;cursor:pointer}
+.skipTut[hidden]{display:none}
 .info{width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.32);color:var(--cream);font:700 20px Georgia,serif;font-style:italic;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .hand small{position:absolute;left:50%;bottom:100%;transform:translateX(-50%);white-space:nowrap;background:var(--cream);color:var(--ink);font:700 13px var(--body);padding:5px 10px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.3)}
 @keyframes poke{0%,100%{margin-top:0}50%{margin-top:-10px}}
@@ -351,6 +353,7 @@ body.duel #crateBtn{display:none}
   </div>
   <div class="toast" id="toast"></div>
   <div class="spot" id="spot" hidden></div>
+  <button class="skipTut" id="skipTut" type="button" hidden aria-label="Close the tutorial">Skip tutorial <span aria-hidden="true">✕</span></button>
   <div class="hand" id="hand" hidden>👇<small id="handTxt"></small></div>
   <div class="countdown" id="countdown" hidden></div>
 
@@ -716,20 +719,22 @@ function render(){renderGoalBtn();renderStall();renderCrateBtn();renderTop();ren
    tapped the sack, merged once and served once. Existing players never see it. */
 function pairCells(){const seen={};for(let i=0;i<N;i++){const t=S.cells[i];if(t==null||t>=MAX)continue;if(seen[t]!=null)return[seen[t],i];seen[t]=i}return null}
 function guide(){const h=$('hand');if(!h)return;const g=S.guide;
-  const sp=$('spot');if(S.duel||!S.intro||g==null||g>=3||!$('intro').hidden){h.hidden=true;sp.hidden=true;return}
+  const sp=$('spot'),sk=$('skipTut');if(S.duel||!S.intro||g==null||g>=3||!$('intro').hidden){h.hidden=true;sp.hidden=true;sk.hidden=true;return}
+  sk.hidden=false;
   let focus=null;
   let el=null,txt='';const pr=pairCells();const ready=document.querySelector('.serve.ready');
   if(g===2&&ready){el=ready;txt='Serve!';focus=[ready.closest('.order')||ready]}
   else if(g>=1&&pr){const target=sel!=null&&S.cells[sel]!=null?(pr.includes(sel)?pr.find(x=>x!==sel):pr[0]):pr[0];
     el=cellEl(sel!=null&&pr.includes(sel)?target:pr[0]);txt=sel!=null&&pr.includes(sel)?'Now tap its twin':'Drag it onto its twin';focus=[cellEl(pr[0]),cellEl(pr[1])]}
   else{el=$('sack');txt=g===0?'Tap Get spice':'Get another spice'}
-  if(!el){h.hidden=true;sp.hidden=true;return}
+  if(!el){h.hidden=true;sp.hidden=true;sk.hidden=true;return}
   {const rs=(focus||[el]).filter(Boolean).map(x=>x.getBoundingClientRect());const pad=8;
    const L=Math.min(...rs.map(r=>r.left))-pad,T=Math.min(...rs.map(r=>r.top))-pad,R=Math.max(...rs.map(r=>r.right))+pad,B=Math.max(...rs.map(r=>r.bottom))+pad;
    sp.style.left=L+'px';sp.style.top=T+'px';sp.style.width=(R-L)+'px';sp.style.height=(B-T)+'px';sp.hidden=false}
   h.classList.remove('slide');if(g>=1&&pr&&!(sel!=null&&pr.includes(sel))&&!(g===2&&ready)){const a=cellEl(pr[0]).getBoundingClientRect(),b2=cellEl(pr[1]).getBoundingClientRect();h.style.setProperty('--dx',(b2.left-a.left)+'px');h.style.setProperty('--dy',(b2.top-a.top)+'px');h.classList.add('slide')}
   const r=el.getBoundingClientRect();h.style.left=(r.left+r.width/2)+'px';h.style.top=(r.top+r.height*.62)+'px';$('handTxt').textContent=txt;h.hidden=false}
 addEventListener('resize',()=>guide());
+$('skipTut').onclick=()=>{audio();S.guide=3;sel=null;save();render();toast('<b>Tutorial closed.</b>Tap the i button any time to see it again.',3200)};
 function cellEl(i){return $('board').children[i]}
 function mark(i,cls){const e=cellEl(i);if(e){e.classList.add(cls)}}
 
