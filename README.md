@@ -41,3 +41,8 @@ Tap **Duel → Play a challenge round**. After 90 seconds, put your name in and 
 - **Restore Jaddi Saeed's stall.** The hammer button (top right) opens the stall: 8 parts to restore with coins, each drawn on the stall, each with a line from Jaddi Saeed and a perk (customers wait longer, or tip more). Restore all 8 to travel on: the Old Spice Souq, then the Lantern Medina, then the Bazaar of Domes.
 - **Stakes.** Customers served while smiling tip 25% (more with perks); served while frowning they pay 25% less; left too long they walk out and the combo breaks. From level 3, an occasional VIP pays double but waits less. Patience pauses while a menu is open or the app is in the background.
 - **Daily goals.** The scroll shows three goals a day; finish all three for coins and energy, and a streak that grows the gift.
+
+## Fight voices (added 2026-10-02)
+
+When two customers argue in the line, you hear them: each one shouts in their own language using the phone's built-in speech voices (Arabic, Russian, Japanese, Korean, Chinese, Persian in their own script; French, Spanish, German, Portuguese, Italian, Turkish natively; romanised lines and English lines in an English voice, with an Indian, British or American accent where the phone has one). Women's and men's voices are pitched differently, and each customer always sounds the same. A line in a script the phone has no voice for stays silent rather than being misread. It follows the **Sound** switch; nothing is downloaded and nothing leaves the phone.
+

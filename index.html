@@ -535,7 +535,7 @@ if(!S.cells.some(v=>v!=null)){[0,0,0,1,0,2].forEach((t,k)=>S.cells[[5,6,9,10,13,
 
 /* ---------- sound ---------- */
 let ac=null;
-function audio(){if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(ac&&ac.state==='suspended')ac.resume()}
+function audio(){vUnlock();if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(ac&&ac.state==='suspended')ac.resume()}
 function tone(f,d=.12,type='sine',g=.18,delay=0,slide=0){if(S.muted||!ac)return;const t=ac.currentTime+delay,o=ac.createOscillator(),v=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(f*slide,t+d);v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+.01);v.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(v).connect(ac.destination);o.start(t);o.stop(t+d+.02)}
 const SCALE=[392,440,523,587,659,784,880,1047,1175,1319];
 const sfx={
@@ -637,6 +637,30 @@ const UAE={"hi": [["I came all the way across town!", ""]], "wait": [["My karak 
 function cOf(who){return (LOOK[who]||{}).c||'ae'}function flagOf(who){return FLAG[cOf(who)]||''}
 function lineFor(who,kind){const loc=(LANG[cOf(who)]||{})[kind]||[];let gen=(GEN[kind]||[]).concat(soukIdx()===0?(UAE[kind]||[]):[]);
   const mustLocal=['claim','back','calm'].includes(kind);const L=loc.length&&(mustLocal||!gen.length||Math.random()<.65)?pick(loc):pick(gen.length?gen:loc);return [flagOf(who)+' '+L[0],L[1]||'']}
+/* fight voices: the phone's own speech voices, each customer in their own language; follows the Sound switch */
+const VLANG={ae:'ar-AE',sa:'ar-SA',kw:'ar-KW',eg:'ar-EG',lb:'ar-LB',ma:'ar-MA',in:'en-IN',pk:'en-IN',bd:'en-IN',ph:'fil-PH',gb:'en-GB',us:'en-US',ru:'ru-RU',cn:'zh-CN',ke:'sw-KE',fr:'fr-FR',es:'es-ES',de:'de-DE',br:'pt-BR',ng:'en-NG',it:'it-IT',tr:'tr-TR',ir:'fa-IR',jp:'ja-JP',kr:'ko-KR'};
+const SCRIPT=[[/[؀-ۿ]/,null],[/[Ѐ-ӿ]/,'ru'],[/[぀-ヿ]/,'ja'],[/[가-힯]/,'ko'],[/[一-鿿]/,'zh']];
+let vList=[],vOk=false;const VS=window.speechSynthesis;
+function vLoad(){try{vList=VS?VS.getVoices():[]}catch(e){vList=[]}}if(VS){vLoad();VS.onvoiceschanged=vLoad}
+function vUnlock(){if(vOk||!VS)return;vOk=true;try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;VS.speak(u)}catch(e){}}
+function vFind(tags){const n=x=>x.lang.replace('_','-').toLowerCase();
+  for(const t of tags){const v=vList.find(v=>n(v)===t.toLowerCase());if(v)return v}                 // an exact accent first, in order
+  for(const t of tags){const b=t.toLowerCase().split('-')[0];const v=vList.find(v=>n(v)===b||n(v).startsWith(b+'-'));if(v)return v}return null}
+const ENACC={gb:'en-GB',us:'en-US',in:'en-IN',pk:'en-IN',bd:'en-IN',ng:'en-NG',ke:'en-KE',ph:'en-PH'};
+function femaleOf(who){const L=LOOK[who]||{};return ['shayla','hijab','long'].includes(L.w)}
+function voiceLine(who,txt,o,gloss){o=o||{};if(!VS||S.muted||S.duel||document.hidden||!txt)return;
+  const t=String(txt).replace(/^\S+\s/,'').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}️]/gu,'').replace(/’/g,"'").trim();if(!t)return;
+  const c=cOf(who),native=VLANG[c]||'en-GB';let tags;
+  const sc=SCRIPT.find(([re])=>re.test(t));
+  if(!sc&&!gloss&&!['gb','us'].includes(c)){tags=[ENACC[c]||'en-GB','en-GB','en-US']}   // an English line from the shared pool: English, in their accent where the phone has one
+  else if(sc)tags=sc[1]?[native.startsWith(sc[1])?native:sc[1]]:[native,'ar','fa'];        // native script: only a voice that can read it
+  else if(/^(ar|fa|zh|ja|ko|ru)/.test(native))tags=['en-IN','en-GB','en'];          // romanised Arabic etc.: an English voice reads it like a visitor would
+  else tags=[native,native.split('-')[0],'en-GB','en'];
+  if(sc&&sc[1]===null&&/[کگپچ]/.test(t))tags=['fa','ar'];
+  const v=vFind(tags);if(!v&&sc)return;                                            // never let a voice spell out a script it cannot read
+  try{if(!o.queue)VS.cancel();const u=new SpeechSynthesisUtterance(t);if(v){u.voice=v;u.lang=v.lang}else u.lang=tags[0];
+    const f=femaleOf(who),h=[...String(who)].reduce((a,ch)=>a+ch.charCodeAt(0),0)%5/20;
+    u.pitch=Math.min(2,(f?1.25:.8)+h+(o.angry?.15:0));u.rate=o.angry?1.12:1;u.volume=o.angry?1:.85;VS.speak(u)}catch(e){}}
 let lastSay=0,lastLine=0,fight=null,nextFight=Date.now()+45000;
 
 
@@ -649,11 +673,11 @@ function startFight(){if(S.duel||!S.queue||S.queue.length<2)return;const q=$('qu
 /* fighters are tracked by name: serving moves the queue up, and a line must stay over the person who said it */
 function fightSync(){if(!fight||!fight.A)return;const ia=S.queue.findIndex(o=>o&&o.who===fight.A),ib=S.queue.findIndex(o=>o&&o.who===fight.B);if(ia<0||ib<0){fight=null;nextFight=Date.now()+60000+Math.random()*40000;document.querySelectorAll('.say.line').forEach(x=>x.remove());return}fight.a=ia;fight.b=ib}
 function fightTick(){fightSync();if(!fight)return;const qs=document.querySelectorAll('#queue .qp');
-  if(fight.said<4&&Date.now()-fight.start>fight.said*2200){const who=fight.said%2?fight.b:fight.a;const L=fight.lines[fight.said];document.querySelectorAll('.say.line').forEach(x=>x.remove());speak(qs[who],L[0],'line cross q'+who,L[1]);lastLine=Date.now();fight.said++}
+  if(fight.said<4&&Date.now()-fight.start>fight.said*2200){const who=fight.said%2?fight.b:fight.a;const L=fight.lines[fight.said];document.querySelectorAll('.say.line').forEach(x=>x.remove());speak(qs[who],L[0],'line cross q'+who,L[1]);voiceLine(fight.said%2?fight.B:fight.A,L[0],{angry:1},L[1]);lastLine=Date.now();fight.said++}
   if(Date.now()-fight.start>11000){const A=S.queue[fight.a],B=S.queue[fight.b];S.queue.splice(fight.a,2);S.away=[A.who,B.who];setTimeout(()=>{S.away=[]},90000);fight=null;nextFight=Date.now()+60000+Math.random()*40000;fillQueue();
     S.orders.forEach(o=>{if(o&&o.t)o.t-=8000});sfx.no();render();setTip(`<b>${esc(A.who)} and ${esc(B.who)} stormed off.</b><br>All that shouting upset your customers.`)}}
 function calmFight(){fightSync();if(!fight)return;const qs=document.querySelectorAll('#queue .qp');const f=fight;fight=null;nextFight=Date.now()+60000+Math.random()*40000;
-  lastLine=Date.now()+5000;document.querySelectorAll('.say.line').forEach(x=>x.remove());const k1=lineFor(S.queue[f.a]?.who,'calm'),k2=lineFor(S.queue[f.b]?.who,'calm');speak(qs[f.a],k1[0],'line q'+f.a,k1[1]);setTimeout(()=>{const q2=document.querySelectorAll('#queue .qp');speak(q2[f.b],k2[0],'line q'+f.b,k2[1])},700);
+  lastLine=Date.now()+5000;document.querySelectorAll('.say.line').forEach(x=>x.remove());const k1=lineFor(S.queue[f.a]?.who,'calm'),k2=lineFor(S.queue[f.b]?.who,'calm');speak(qs[f.a],k1[0],'line q'+f.a,k1[1]);voiceLine(f.A,k1[0],null,k1[1]);setTimeout(()=>{const q2=document.querySelectorAll('#queue .qp');speak(q2[f.b],k2[0],'line q'+f.b,k2[1]);voiceLine(f.B,k2[0],{queue:1},k2[1])},700);
   const bonus=15+S.level*3;flyCoins($('queue'),4,()=>{S.coins+=bonus;renderTop();save()});tone(784,.12,'triangle',.12);tone(1046,.16,'triangle',.12,.1);
   renderQueue();setTip(`<b>Peace in the souk! +${bonus} coins</b><br>A wise stall keeper keeps the line calm.`)}
 function speak(el,txt,cls,gloss){if(!el)return;const line=/line/.test(cls||''),key=line?'line'+((cls||'').match(/q(\d)/)?.[1]||''):'order'+(cls||'').match(/s(\d)/)?.[1];
@@ -1006,7 +1030,7 @@ let resetArm=false;
 $('resetBtn').onclick=()=>{if(!resetArm){resetArm=true;$('resetBtn').textContent='Tap again';setTimeout(()=>{resetArm=false;$('resetBtn').textContent='Reset'},3000);return}
   S=fresh();S.intro=true;S.daily=today();renderStall();[0,0,0,1,0,2].forEach((t,k)=>S.cells[[5,6,9,10,13,14][k]]=t);while(S.orders.length<3)S.orders.push(newOrder());$('shop').hidden=true;render()};
 function renderMute(){$('muteTxt').textContent=S.muted?'Muted':'Sound';$('wave').style.display=S.muted?'none':'';$('muteBtn').setAttribute('aria-label',S.muted?'Sound off':'Sound on')}
-$('muteBtn').onclick=()=>{S.muted=!S.muted;audio();renderMute();save();if(!S.muted)sfx.pick()};
+$('muteBtn').onclick=()=>{S.muted=!S.muted;if(S.muted&&window.speechSynthesis)speechSynthesis.cancel();audio();renderMute();save();if(!S.muted)sfx.pick()};
 /* ---------- souk duel: same tray, same customers, 90 seconds ---------- */
 const DUEL_S=90,COUNT_MS=3000;
 let room=null,droom=null,duel=null,MAIN=null,matchT=null,unPeers=null;
