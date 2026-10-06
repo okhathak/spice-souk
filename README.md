@@ -66,3 +66,9 @@ Each day you finish your three daily goals, Jaddi stamps his card (in the 📜 g
 
 Layout: on tall windows the stall widens instead of leaving an empty band above the tray, and on short phones (iPhone SE size) the order cards and tip row tighten so the tray's cells grow from 35px to 43px.
 
+## Rush hour and the food critic (added 2026-10-06)
+
+**Rush hour:** after the first few customers, every 3 to 6 minutes of real play the souq floods for 40 seconds. A bell rings, the awning starts moving, a countdown pill sits over the awning, and every coin earned is doubled; at the end you get a summary of what you served and earned. It pauses with the game and never happens during a duel, a crate or the tutorial.
+
+**The food critic:** every few minutes a customer may arrive as a critic (purple card, 📝 badge). Their review depends only on speed: served within 14 seconds is five stars, then four, three and two; walking out is one star. Pay grows with the stars (up to ×3).
+

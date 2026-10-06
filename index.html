@@ -358,6 +358,14 @@ body.duel #crateBtn{display:none}
 .stampc i.on{border:2px solid #c0392b;background:#ffe2c2;animation:stampin .35s}
 @keyframes stampin{0%{transform:scale(1.6) rotate(-12deg);opacity:0}100%{transform:none;opacity:1}}.stampc i.gift{border-color:#e0a21b;background:#fff1c9;font-size:18px}
 .keeps{margin-bottom:12px}.keeps>b{display:block;font-family:var(--display);font-size:15px;color:#4a2412;margin:2px 0 6px}.mi.ke{font-size:26px;display:grid;place-items:center}
+.rushbar{position:absolute;left:50%;transform:translateX(-50%);z-index:30;overflow:hidden;background:linear-gradient(#ffd66b,#f0a52a);color:#4a2412;font:700 13px var(--display);padding:5px 12px;border-radius:99px;box-shadow:0 3px 10px rgba(0,0,0,.35);white-space:nowrap;animation:rushpulse 1s ease-in-out infinite}
+.rushbar i{position:absolute;left:0;bottom:0;height:3px;background:#c0392b;transition:width 1s linear}
+@keyframes rushpulse{50%{transform:translateX(-50%) scale(1.05)}}
+body.rush .awning{background-size:88px 12px;animation:awnslide .8s linear infinite}
+@keyframes awnslide{to{background-position:88px 0}}
+body.rush .order:not(.happy){box-shadow:0 0 0 2px rgba(255,190,80,.7),0 0 16px rgba(255,170,60,.45)}
+.order.critic{box-shadow:0 0 0 2px #8e5bd0 inset,0 0 14px rgba(150,100,220,.4)}
+.vipb.critb{background:#6d3fae;color:#fff}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -542,7 +550,7 @@ function moodOf(o){if(o.happy)return'happy';const w=(Date.now()-(o.t||Date.now()
 function paused(){return document.hidden||S.duel||S.guide==null||S.guide<3||[...document.querySelectorAll('.sheet,.celebrate')].some(x=>!x.hidden)}
 function walkouts(){if(paused()){S.orders.forEach(o=>{if(o&&o.t)o.t+=1000});return}
   S.orders.forEach((o,k)=>{if(!o||o.happy||o.gone)return;if((Date.now()-o.t)/1000<patience(o).gone)return;o.gone=true;
-    const el=document.querySelectorAll('#orders .order')[k];S.combo=0;sfx.no();if((S.jWalk||0)<2){S.jWalk=(S.jWalk||0)+1;setTimeout(()=>jaddiSay('Don’t let them wait too long, habibi…',true),900)}setTip(`<b>${esc(o.who)} gave up waiting and left.</b><br>Serve smiling customers for tips.`);
+    const el=document.querySelectorAll('#orders .order')[k];S.combo=0;sfx.no();if((S.jWalk||0)<2){S.jWalk=(S.jWalk||0)+1;setTimeout(()=>jaddiSay('Don’t let them wait too long, habibi…',true),900)}setTip(`<b>${esc(o.who)} gave up waiting and left.</b><br>Serve smiling customers for tips.`);if(o.critic&&!S.duel)setTimeout(()=>toast('<b>📝 The critic: ★☆☆☆☆</b>“I left before anyone served me.”',3600),700);
     if(el){el.classList.add('walkout');setTimeout(()=>{nextCustomer(k);render()},450)}else{nextCustomer(k);render()}})}
 function personSVG(name,mood,bg){const L=lookOf(name),sk=L.sk;let back='',front='',body='';
   body=`<path d="M6 40 C7 31 13 28 20 28 C27 28 33 31 34 40Z" fill="${L.cl}"/>`;
@@ -666,7 +674,8 @@ function renderTop(){
 }
 function freeName(free,all){if(free.length)return pick(free);const busy=S.orders.concat(S.queue||[]).map(o=>o&&o.who);const b=all.filter(p=>!busy.includes(p));return pick(b.length?b:all)}
 function fillQueue(){if(!S.queue)S.queue=[];while(S.queue.length<3){const o=newOrder();o.fresh=false;S.queue.push(o)}}
-function nextCustomer(k){fillQueue();const o=S.queue.shift();o.fresh=true;o.t=Date.now();if(!S.duel&&S.level>=3&&!S.orders.some(x=>x&&x.vip)&&Math.random()<.15)o.vip=true;S.orders[k]=o;fillQueue();return o}
+function nextCustomer(k){fillQueue();const o=S.queue.shift();o.fresh=true;o.t=Date.now();if(!S.duel&&S.level>=3&&!S.orders.some(x=>x&&x.vip)&&Math.random()<.15)o.vip=true;
+  else if(!S.duel&&(S.served||0)>=10&&Date.now()>nextCritic&&!S.orders.some(x=>x&&x.critic)&&Math.random()<.35){o.critic=true;nextCritic=Date.now()+240000+Math.random()*180000;setTimeout(()=>toast('<b>📝 A food critic is in line!</b>Serve them fast for a five-star review.',3200),500)}S.orders[k]=o;fillQueue();return o}
 function renderQueue(){const q=$('queue');if(!q)return;fillQueue();fightSync();
   const f=fight;q.classList.toggle('fighting',!!f);
   q.innerHTML=`<span class="qlabel">${f?'Tap!':'In line'}</span>`+S.queue.map((o,i)=>{const in_=f&&(i===f.a||i===f.b);
@@ -803,9 +812,9 @@ function renderOrders(){renderQueue();
   S.orders.forEach((o,i)=>{
     const ready=canServe(o);const used={};
     const needs=o.n.map(t=>{used[t]=(used[t]||0)+1;const have=(c[t]||0)>=used[t];return `<div class="need${have?' have':''}" style="--tc:${POTS[t][0]}" aria-label="Needs ${SPICES[t].n}, number ${t+1}${have?', on your tray':''}">${jarHTML(t,true)}<span class="num">${t+1}</span><span class="nm">${SPICES[t].n}</span><span class="ok"></span></div>`}).join('');
-    const d=document.createElement('div');d.className='order'+(o.fresh?' in':'')+(o.vip?' vip':'');o.fresh=false;
+    const d=document.createElement('div');d.className='order'+(o.fresh?' in':'')+(o.vip?' vip':'')+(o.critic?' critic':'');o.fresh=false;
     if(!o.t)o.t=Date.now();const m=moodOf(o);d.dataset.mood=m;
-    d.innerHTML=`<div class="ohead"><div class="face">${personSVG(o.who,m)}</div><div><div class="dish">${o.vip?'<span class="vipb">VIP</span>':''}${o.d}</div><div class="oname">${flagOf(o.who)} ${o.who}</div></div></div><div class="needs">${needs}</div><button type="button" class="serve${ready?' ready':''}">${ready?'Serve':'Waiting'}</button>`;
+    d.innerHTML=`<div class="ohead"><div class="face">${personSVG(o.who,m)}</div><div><div class="dish">${o.vip?'<span class="vipb">VIP</span>':''}${o.critic?'<span class="vipb critb">📝 Critic</span>':''}${o.d}</div><div class="oname">${flagOf(o.who)} ${o.who}</div></div></div><div class="needs">${needs}</div><button type="button" class="serve${ready?' ready':''}">${ready?'Serve':'Waiting'}</button>`;
     d.querySelector('.serve').onclick=()=>serve(i,d);
     box.appendChild(d);
   });
@@ -1009,6 +1018,26 @@ function flyPot(fromEl,toEl,t,delay){const a=center(fromEl),b=center(toEl),fx=$(
 function flyStar(fromEl,n){const a=center(fromEl),b=center($('chest')),fx=$('fx');for(let i=0;i<n;i++){const st=document.createElement('div');st.className='flystar';st.textContent='★';st.style.left=(a.x-10+i*14)+'px';st.style.top=(a.y-10)+'px';fx.appendChild(st);
   setTimeout(()=>{st.style.transform=`translate(${b.x-a.x-i*14}px,${b.y-a.y}px) scale(1.3)`;st.style.opacity='0'},300+i*120);
   setTimeout(()=>{st.remove();if(S.duel)return;tone(1320+i*180,.12,'triangle',.12);S.stars++;renderChest();save();if(S.stars===CHEST){toast('<b>Your chest is full!</b>Tap it to open your gift.',2600);tone(1760,.3,'sine',.12,.1)}},1000+i*120)}}
+/* ---------- variety: rush hour and the food critic ----------
+   Rush hour: every 3-6 minutes of real play the souq floods for 40 seconds and every coin is doubled.
+   The critic: a rare customer who rates the service 1-5 stars on speed alone, and pays by the stars. */
+const RUSH_MS=40000,CRITIC_SAYS=['','“I waited and waited. One star.”','“The spices were fine. The wait was not.”','“Good, honest spices. A solid three.”','“Quick and fragrant. I’ll be back!”','“The best spices in the souq. Five stars!”'];
+let rush=null,nextRush=Date.now()+200000,nextCritic=Date.now()+150000;
+function rushReady(){return !S.duel&&S.intro&&S.guide>=3&&(S.served||0)>=6&&!paused()&&!fight&&!cg}
+function rushTick(){const now=Date.now();
+  if(rush){if(paused()||S.duel){rush.end+=1000;return}const left=rush.end-now;renderRush(left);if(left<=0)endRush();return}
+  if(paused())nextRush+=1000;else if(now>nextRush&&rushReady())startRush()}
+function startRush(){rush={end:Date.now()+RUSH_MS,served:0,coins:0};document.body.classList.add('rush');
+  [0,.18,.36].forEach((d,i)=>tone(392*(1+i*.26),.35,'triangle',.16,d));buzz(60);
+  toast('<b>🔔 Rush hour!</b>The whole souq is here. Double coins for 40 seconds!',3200);setTimeout(()=>jaddiSay('Yalla, yalla! Serve them all, ya wildi!',true),900);renderRush(RUSH_MS)}
+function renderRush(left){let b=$('rushBar');if(!b){b=document.createElement('div');b.id='rushBar';b.className='rushbar';b.setAttribute('role','status');$('app').appendChild(b)}
+  const a=document.querySelector('.awning');if(a)b.style.top=(a.offsetTop-9)+'px';
+  b.innerHTML=`🔔 Rush hour · ×2 coins · <b>${Math.max(0,Math.ceil(left/1000))}s</b><i style="width:${Math.max(0,left/RUSH_MS*100)}%"></i>`}
+function endRush(){const r=rush;rush=null;document.body.classList.remove('rush');const b=$('rushBar');if(b)b.remove();
+  nextRush=Date.now()+180000+Math.random()*180000;tone(523,.15,'triangle',.12);tone(392,.25,'triangle',.12,.12);
+  toast(r.served?`<b>Rush hour over!</b>You served ${r.served} and earned ${r.coins} coins.`:'<b>Rush hour over.</b>The next one comes in a few minutes.',3600)}
+function criticStars(o){const s=(Date.now()-o.t)/1000;return s<14?5:s<24?4:s<38?3:2}
+function criticReview(o,stars){setTimeout(()=>{toast(`<b>📝 The critic: ${'★'.repeat(stars)}${'☆'.repeat(5-stars)}</b>${CRITIC_SAYS[stars]}`,3800);if(stars>=4)[0,.1,.2].forEach((d,i)=>tone(784*(1+i*.2),.14,'triangle',.12,d))},900)}
 function serve(k,el){
   audio();idleReset();const o=S.orders[k];
   if(!o||o.happy||o.gone)return;  // one serve per customer: extra taps while they leave do nothing
@@ -1018,10 +1047,11 @@ function serve(k,el){
   taken.forEach(i=>S.cells[i]=null);
   const now=Date.now();S.combo=(now-(S.lastServe||0)<15000)?(S.combo||1)+1:1;if(!S.duel){if(!S.jFirst){S.jFirst=1;setTimeout(()=>jaddiSay('That’s how I did it in 1962! 👏',true),1600)}else if(S.combo===3)setTimeout(()=>jaddiSay('Ya salam! Just like the old days!'),1400)}S.lastServe=now;S.served=(S.served||0)+1;if(!S.duel&&S.served%CRATE_EVERY===0)crateArrives();
   const mood=moodOf(o),tipR=mood==='calm'?.25+perkTip():mood==='wait'?perkTip():-.25;
-  const base=Math.round(o.n.reduce((s,t)=>s+(t+1)*(t+1)*3,5)*(o.vip?2:1)),bonus=S.combo>1?Math.round(base*.25*(S.combo-1)):0,tipAmt=Math.round((base+bonus)*tipR),pay=Math.max(1,base+bonus+tipAmt),xp=o.n.reduce((s,t)=>s+t+2,0);
+  const base=Math.round(o.n.reduce((s,t)=>s+(t+1)*(t+1)*3,5)*(o.vip?2:1)),bonus=S.combo>1?Math.round(base*.25*(S.combo-1)):0,tipAmt=Math.round((base+bonus)*tipR),stars=o.critic?criticStars(o):0,pay=Math.round(Math.max(1,base+bonus+tipAmt)*(stars?1+stars*.4:1)*(rush&&!S.duel?2:1)),xp=o.n.reduce((s,t)=>s+t+2,0);
   sfx.serve();buzz(25);el.classList.add('happy');o.happy=true;{const sb=el.querySelector('.serve');if(sb){sb.disabled=true;sb.textContent='Served ✓'}}el.querySelector('.face').innerHTML=personSVG(o.who,'happy')+'<span class="mood">❤️</span>';el.dataset.mood='happy';
   el.insertAdjacentHTML('beforeend',`<div class="bubble">${mood==='cross'?pick(['Finally…','Took a while.','Hmm, OK.']):lineFor(o.who,'thx')[0]}</div>`);
   if(!S.duel){if(tipAmt>0)setTimeout(()=>setTip(`<b>${esc(o.who)} left a tip: +${tipAmt}</b><br>Fast service pays.`),300);else if(tipAmt<0)setTimeout(()=>setTip(`<b>${esc(o.who)} paid ${-tipAmt} less.</b><br>They waited too long.`),300)}
+  if(!S.duel){if(rush){rush.served++;rush.coins+=pay}if(stars)criticReview(o,stars)}
   goal('serve');if(mood==='calm')goal('happy');goal('earn',pay);if(S.combo>=2)goal('combo',S.combo);
   if(S.combo>1){const c=document.createElement('div');c.className='combo';c.textContent=`Combo ×${S.combo}! +${bonus}`;$('app').appendChild(c);setTimeout(()=>c.remove(),1150);[0,.08,.16].forEach((d,i)=>tone(880*(1+i*.25)*(1+S.combo*.05),.15,'triangle',.14,d))}
   plus(el,'+'+pay);sel=null;renderBoard();const st=S;
@@ -1048,7 +1078,7 @@ function tick(){
   if(S.energy<EMAX){const gained=Math.floor((Date.now()-S.eAt)/EREGEN);if(gained>0){S.energy=Math.min(EMAX,S.energy+gained);S.eAt+=gained*EREGEN;renderTop();save()}
     const left=Math.ceil((EREGEN-(Date.now()-S.eAt))/1000);$('etimer').textContent=S.energy<EMAX?` ${left}s`:''}else $('etimer').textContent='';
 }
-setInterval(()=>{tick();walkouts();updateMoods();chatter();trackPlay()},1000);tick();
+setInterval(()=>{tick();walkouts();updateMoods();chatter();trackPlay();rushTick()},1000);tick();
 
 /* ---------- daily gift ---------- */
 function today(){return new Date().toISOString().slice(0,10)}
