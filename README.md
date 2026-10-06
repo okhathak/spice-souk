@@ -86,3 +86,15 @@ Layout: on tall windows the stall widens instead of leaving an empty band above 
 
 The recorded neural voices sounded robotic and calm, never angry, and muffled in the mix. Customers now speak in made-up **babble** (Animal Crossing / Sims style), synthesised live in the game with Web Audio: no files, no service, nothing to license. Each syllable is a short sawtooth voice through two vowel formants with a consonant tick; the vowels follow the real line where it is written in Latin letters. Every customer has their own pitch (women higher, each person slightly different), every nationality its own rhythm and melody (`BAB` in `index.html`), and anger is faster, higher and punchier, rising into a yell on "!". The words stay in the speech bubble. The recording workflow and its tools are removed; `voices/*.mp3` stays only as source material for `tools/make-ambience.py` (the crowd murmur in the souk background).
 
+## 30 levels with goals, stars and an ending (added 2026-10-06)
+
+The game used to level up silently from hidden points, so it felt like endless serving. It is now a campaign of **30 levels, 10 per souq**. Each level has 2 or 3 goals shown at the top (*Level 4 · 1/3 goals ▸*; tap it for the goals and the level map), such as *Make your first Loomi*, *Restore 4 of 8 stall parts*, *Serve 2 Machboos*, *Get a 4★ review from a critic* or *Get a 4× combo*. Finishing them completes the level: 1 to 3 stars (fewer walkouts, more stars), coins, a full energy bar, and what comes next.
+
+- **New spices unlock along the way:** Loomi at level 3, Cardamom 6, Cinnamon 9, Sumac 13, Saffron 17, Rose 22, each with its dishes.
+- **Every tenth level finishes a souq** (the stall fully restored) and takes you on to the next one; travelling is only by finishing levels.
+- **Level 30 is the ending** (Jaddi's dream comes true, with your total stars). After it the game is free play: daily goals, the stamp card, duels and friends carry on.
+- When a level needs a critic or a particular dish, they come round sooner, so no level waits on luck.
+- Old saves are placed at the level their souq and stall say (e.g. the second souq with 5 parts restored starts at level 16).
+
+The robot playtester (`tools/playtest.cjs`) plays a fresh game through the levels: about 2 minutes a level for levels 1 to 9.
+

@@ -21,8 +21,7 @@ await p.evaluate(()=>{window.__ev={idle:{},walk:0,rush:0,critic:0,crate:0,fight:
     if(fight&&Math.random()<.5){calmFight();E.calm++;return 'calm'}
     const oe=document.querySelectorAll('#orders .order');
     const k=S.orders.findIndex(o=>o&&!o.happy&&!o.gone&&canServe(o));if(k>=0){if(S.orders[k].critic)E.critic++;serve(k,oe[k]);return 'serve'}
-    if(builtN()>=8&&S.souk<STALLS.length-1){openStall();E.travel=(E.travel||[]).concat(Math.round((Date.now()-__t0)/1000));$('travelBtn').click();return 'travel'}
-    const st=stall(),nx=st.steps[builtN()];if(nx&&S.coins>=nx.c){build();E.built.push(Math.round((Date.now()-__t0)/1000));return 'build'}
+        const st=stall(),nx=st.steps[builtN()];if(nx&&S.coins>=nx.c){build();E.built.push(Math.round((Date.now()-__t0)/1000));return 'build'}
     const nc=SACK_UP[S.sackLv].cost;if(nc&&S.coins>=nc+((nx&&nx.c)||0)*0.5){S.coins-=nc;S.sackLv++;E.buyUp=(E.buyUp||0)+1;return 'buyUp'}
     const g=goals();if(g&&g.claimed!==today()&&g.list.every(x=>x.p>=x.goal)){openGoals();$('glClaim').click();return 'goals'}
     if(S.stars>=CHEST){openChest();return 'chest'}
@@ -31,14 +30,18 @@ await p.evaluate(()=>{window.__ev={idle:{},walk:0,rush:0,critic:0,crate:0,fight:
     const need=new Set(S.orders.flatMap(o=>o&&!o.happy?o.n:[]));const byT={};S.cells.forEach((t,i)=>{if(t!=null&&t<MAX)(byT[t]=byT[t]||[]).push(i)});
     const pairs=Object.entries(byT).filter(([t,a])=>a.length>=2).map(([t,a])=>[+t,a]);
     const have=counts();
-    const useful=pairs.find(([t])=>need.has(t+1)&&!(have[t+1]>= [...S.orders].filter(o=>o&&!o.happy).flatMap(o=>o.n).filter(x=>x===t+1).length));
+    // plan a chain: tiers still missing for orders or the level's 'make' goal; merge the highest pair below the lowest missing tier
+    const wantN={};S.orders.forEach(o=>{if(o&&!o.happy)o.n.forEach(t=>wantN[t]=(wantN[t]||0)+1)});(lvNeeds('make')||[]).forEach(g=>wantN[g.t]=Math.max(wantN[g.t]||0,1));
+    const missing=Object.keys(wantN).map(Number).filter(t=>(have[t]||0)<wantN[t]).sort((a,b)=>a-b);
+    let chain=null;for(const T of missing){const c=pairs.filter(([t])=>t<T).sort((a,b)=>b[0]-a[0])[0];if(c){chain=c;break}}
+    const useful=chain||pairs.find(([t])=>need.has(t+1)&&!(have[t+1]>= [...S.orders].filter(o=>o&&!o.happy).flatMap(o=>o.n).filter(x=>x===t+1).length));
     const pick=useful||(S.cells.every(v=>v!=null)?pairs[0]:null)||(Math.random()<.4?pairs.find(([t])=>!need.has(t)||(have[t]>3)):null);
     if(pick){sel=null;tapCell(pick[1][0]);tapCell(pick[1][1]);return 'merge'}
     const empty=S.cells.some(v=>v==null);
     if(S.energy>0&&empty){sack();return 'sack'}
     const why=S.energy<=0?'noEnergy':!empty?'boardFull':'nothing';E.idle[why]=(E.idle[why]||0)+1;return 'idle:'+why};
-  window.__t0=Date.now();
-  window.__snap=()=>({lvl:S.level,coins:S.coins,served:S.served,energy:S.energy,built:builtN(),souk:S.souk,stamps:S.stamps||0,walk:__ev.walk});
+  window.__t0=Date.now();window.__lvt=[];const _lc=levelComplete;levelComplete=()=>{const L=S.level;_lc();if(S.level>L)__lvt.push(L+'@'+Math.round((Date.now()-__t0)/60000*10)/10+'m★'+(S.stars3||{})[L])};
+  window.__snap=()=>({lvl:S.level,goals:(levelPlan(S.level)||[]).map(x=>lvProg(x)+'/'+x.goal).join(' '),coins:S.coins,served:S.served,energy:S.energy,built:builtN(),souk:S.souk,stamps:S.stamps||0,walk:__ev.walk});
   const _wo=walkouts;walkouts=()=>{const before=S.orders.filter(o=>o&&o.gone).length;_wo();const after=S.orders.filter(o=>o&&o.gone).length;if(after>before)__ev.walk+=after-before};
 });
 const actions={};const timeline=[];
@@ -46,5 +49,5 @@ const steps=Math.round(MIN*60/1.2);
 for(let i=0;i<steps;i++){await p.clock.runFor(1200);const a=await p.evaluate(()=>__step());const key=a.split(':')[0]==='idle'?a:a;actions[key]=(actions[key]||0)+1;
   if(i%Math.round(60/1.2)===0)timeline.push((Math.round(i*1.2/60))+'m '+JSON.stringify(await p.evaluate(()=>__snap())))}
 const ev=await p.evaluate(()=>__ev);
-console.log(timeline.join('\n'));console.log('actions',JSON.stringify(actions));console.log('events',JSON.stringify(ev));console.log('errors',errs.slice(0,5));
+console.log(timeline.join('\n'));console.log('actions',JSON.stringify(actions));console.log('events',JSON.stringify(ev));console.log('levels',(await p.evaluate(()=>__lvt)).join('  '));console.log('errors',errs.slice(0,5));
 await p.screenshot({path:'playtest-end.png'});await b.close()})();

@@ -367,6 +367,16 @@ body.rush .order:not(.happy){box-shadow:0 0 0 2px rgba(255,190,80,.7),0 0 16px r
 .order.critic{box-shadow:0 0 0 2px #8e5bd0 inset,0 0 14px rgba(150,100,220,.4)}
 .vipb.critb{background:#6d3fae;color:#fff}
 .restore.travel{animation:chest 1s 3,crateGlow 2.4s 3s ease-in-out infinite}
+button.souk{background:none;border:0;padding:0;text-align:left;color:inherit;min-width:0;cursor:pointer;min-height:44px}
+button.souk .lvl{display:block!important;color:#ffd66b;font-weight:700}
+.lvstars{font-size:58px;line-height:1;color:#f4b31d;letter-spacing:4px;text-shadow:0 3px 0 #a86c08}.lvstars span{color:rgba(0,0,0,.18);text-shadow:none}
+.lvmap{display:flex;flex-direction:column;gap:10px;margin:8px 0 12px}
+.lvrow b{display:block;font-family:var(--display);font-size:14px;color:#4a2412;margin-bottom:6px}
+.lvdots{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.lvd{aspect-ratio:1;border-radius:50%;background:#efdcb8;color:#a58b6a;display:grid;place-items:center;font:700 12px var(--display);position:relative}
+.lvd i{position:absolute;bottom:-11px;left:50%;transform:translateX(-50%);font-size:8px;color:#e0a21b;font-style:normal;white-space:nowrap;letter-spacing:-1px}
+.lvd.done{background:#7cc46b;color:#fff}.lvd.cur{background:#ffd66b;color:#4a2412;box-shadow:0 0 0 3px #e0a21b;animation:chest 1.4s infinite}
+.lvrow{padding-bottom:8px}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -375,7 +385,7 @@ body.rush .order:not(.happy){box-shadow:0 0 0 2px rgba(255,190,80,.7),0 0 16px r
 </defs></svg>
 <div class="app" id="app">
   <div class="top">
-    <div class="souk"><b id="soukName">The Old Spice Souq</b><div class="xpbar"><i id="xp"></i></div><span class="lvl" id="lvl">Level 1</span></div>
+    <button class="souk" id="soukBtn" type="button" aria-label="Level goals and map"><b id="soukName">The Old Spice Souq</b><div class="xpbar"><i id="xp"></i></div><span class="lvl" id="lvl">Level 1</span></button>
     <button class="info" id="infoBtn" type="button" aria-label="How to play">i</button>
     <div class="chip" id="coinChip"><span class="coin"></span><span id="coins">0</span></div>
     <div class="chip" id="energyChip"><span class="bolt"></span><span id="energy">30</span><small id="etimer"></small></div>
@@ -474,6 +484,14 @@ body.rush .order:not(.happy){box-shadow:0 0 0 2px rgba(255,190,80,.7),0 0 16px r
     <button class="btn" type="button" data-close style="width:100%;margin-top:4px">Close</button>
   </div></div>
 
+  <div class="sheet" id="lvSheet" hidden><div class="card">
+    <h2 id="lvTitle">Level 1</h2>
+    <p class="dnote" id="lvSub"></p>
+    <div class="gllist" id="lvList"></div>
+    <p class="dnote" id="lvNext"></p>
+    <div class="lvmap" id="lvMap"></div>
+    <button class="btn warm dfull" type="button" data-close>Keep selling</button>
+  </div></div>
   <div class="sheet" id="goalSheet" hidden><div class="card">
     <h2>Today’s goals</h2>
     <p class="dnote" id="glStreak"></p>
@@ -522,6 +540,7 @@ const SPICES=[
  {n:'Rose',c:'#e87aa4',f:'Dried Taif rose petals, for sweets, tea and mahalabia.'}
 ];
 const MAX=SPICES.length-1;
+const LV_MAX=30,NEWTIER={3:3,6:4,9:5,13:6,17:7,22:8};  // level -> the spice tier it unlocks (declared early: the first orders are made at load)
 const DISHES=[
  {d:'Arabic coffee',n:[4]},{d:'Harees',n:[0]},{d:'Spicy fries',n:[1]},{d:'Golden rice',n:[2]},
  {d:'Fish salona',n:[0,2]},{d:'Machboos',n:[2,3]},{d:'Shawarma',n:[1,5]},{d:'Karak chai',n:[4,5]},
@@ -550,7 +569,7 @@ function patience(o){const hard=o&&o.n?Math.max(...o.n)+(o.n.length-1)*.5:0,p=(o
 function moodOf(o){if(o.happy)return'happy';const w=(Date.now()-(o.t||Date.now()))/1000,P=patience(o);return w<P.calm?'calm':w<P.wait?'wait':'cross'}
 function paused(){return document.hidden||S.duel||S.guide==null||S.guide<3||[...document.querySelectorAll('.sheet,.celebrate')].some(x=>!x.hidden)}
 function walkouts(){if(paused()){S.orders.forEach(o=>{if(o&&o.t)o.t+=1000});return}
-  S.orders.forEach((o,k)=>{if(!o||o.happy||o.gone)return;if((Date.now()-o.t)/1000<patience(o).gone)return;o.gone=true;
+  S.orders.forEach((o,k)=>{if(!o||o.happy||o.gone)return;if((Date.now()-o.t)/1000<patience(o).gone)return;o.gone=true;lvEvent('walk');
     const el=document.querySelectorAll('#orders .order')[k];S.combo=0;sfx.no();if((S.jWalk||0)<2){S.jWalk=(S.jWalk||0)+1;setTimeout(()=>jaddiSay('Don’t let them wait too long, habibi…',true),900)}setTip(`<b>${esc(o.who)} gave up waiting and left.</b><br>Serve smiling customers for tips.`);if(o.critic&&!S.duel)setTimeout(()=>toast('<b>📝 The critic: ★☆☆☆☆</b>“I left before anyone served me.”',3600),700);
     if(el){el.classList.add('walkout');setTimeout(()=>{nextCustomer(k);render()},450)}else{nextCustomer(k);render()}})}
 function personSVG(name,mood,bg){const L=lookOf(name),sk=L.sk;let back='',front='',body='';
@@ -573,16 +592,17 @@ function personSVG(name,mood,bg){const L=lookOf(name),sk=L.sk;let back='',front=
   const lines=L.old?`<path d="M14.6 19.6 L15.6 19.9 M25.4 19.6 L24.4 19.9" stroke="#8a5a3a" stroke-width=".6"/>`:'';
   return `<svg viewBox="0 0 40 40" aria-hidden="true"><defs><pattern id="chk" width="2.4" height="2.4" patternUnits="userSpaceOnUse"><rect width="2.4" height="2.4" fill="#fbfaf6"/><rect width="1.2" height="1.2" fill="#c03a2b"/><rect x="1.2" y="1.2" width="1.2" height="1.2" fill="#c03a2b"/></pattern></defs>
    <circle cx="20" cy="20" r="20" fill="${bg||'#f0dcbc'}"/>${back}${body}<rect x="17.6" y="24" width="4.8" height="5" fill="${sk}"/><ellipse cx="20" cy="17" rx="7.4" ry="8.4" fill="${sk}"/>${lines}${cheeks}${beard}${eyes}${brows}<path d="${mouth}" stroke="#5a2414" stroke-width="1.2" fill="none" stroke-linecap="round"/>${front}${sweat}</svg>`}
-const COLS=4,ROWS=5,N=COLS*ROWS,EMAX=40,EREGEN=6000;
-function eMax(){return EMAX+Math.max(0,(S.level||1)-1)*3}  // the energy bar grows with you: later souqs ask for bigger spices
+const LV_MAX0=30,COLS=4,ROWS=5,N=COLS*ROWS,EMAX=40,EREGEN=6000;
+function eMax(){return EMAX+Math.min(29,Math.max(0,(S.level||1)-1))*2}  // the energy bar grows with you: later souqs ask for bigger spices
 const SACK_UP=[{p:.15,cost:120},{p:.3,cost:300},{p:.45,cost:700},{p:.6,cost:null}];
 
 const $=id=>document.getElementById(id);
 let S;
-function fresh(){return{cells:Array(N).fill(null),orders:[],coins:50,energy:EMAX,eAt:Date.now(),xp:0,level:1,found:[0],sackLv:0,stars:0,served:0,combo:0,lastServe:0,daily:'',intro:false,guide:0,muted:false,ads:0,adDay:''}}
-function load(){try{const s=JSON.parse(localStorage.getItem('spicesouk'));if(s&&s.cells&&s.cells.length===N){if(s.intro&&s.guide==null)s.guide=3;return Object.assign(fresh(),s)}}catch(e){}return null}
+function fresh(){return{camp:1,cells:Array(N).fill(null),orders:[],coins:50,energy:EMAX,eAt:Date.now(),xp:0,level:1,found:[0],sackLv:0,stars:0,served:0,combo:0,lastServe:0,daily:'',intro:false,guide:0,muted:false,ads:0,adDay:''}}
+function load(){try{const s=JSON.parse(localStorage.getItem('spicesouk'));if(s&&s.cells&&s.cells.length===N){if(s.intro&&s.guide==null)s.guide=3;const o=Object.assign(fresh(),s);o.camp=s.camp;return o}}catch(e){}return null}  // camp only from the save: an old save must be moved onto the levels
 function save(){if(S.duel)return;try{localStorage.setItem('spicesouk',JSON.stringify(S))}catch(e){}}
 S=load()||fresh();
+if(S.souk!=null&&!S.camp){S.camp=1;S.level=Math.min(LV_MAX0,(S.souk||0)*10+Math.max(1,Math.min(10,Math.min(8,S.built||0)+1)));S.lv=null}
 if(S.souk==null){let k=0;SOUKS.forEach((x,i)=>{if(S.level>=x.at)k=i});S.souk=k;S.built=Math.min(8,Math.max(0,S.level-1));if(k>0)S.built=0}
 S.orders.forEach(o=>{o.t=Date.now()});
 if(!S.cells.some(v=>v!=null)){[0,0,0,1,0,2].forEach((t,k)=>S.cells[[5,6,9,10,13,14][k]]=t)}
@@ -637,7 +657,7 @@ function potSVG(t){
 function jarHTML(t,mini){return `<div class="jar${mini?' mini':''}" style="--tc:${POTS[t][0]}">${potSVG(t)}${mini?'':`<span class="tier">${t+1}</span>`}</div>`}
 function soukIdx(){return Math.min(S.souk||0,SOUKS.length-1)}
 function xpNeed(){return 20+S.level*15}
-function maxTier(){return S.duel?4:Math.min(MAX,2+Math.floor((S.level-1)/2))}
+function maxTier(){return S.duel?4:tierAt(S.level)}
 function pick(a){return a[Math.floor(Math.random()*a.length)]}
 function counts(){const c={};S.cells.forEach(t=>{if(t!=null)c[t]=(c[t]||0)+1});return c}
 function canServe(o){const c=counts(),need={};o.n.forEach(t=>need[t]=(need[t]||0)+1);return Object.keys(need).every(t=>(c[t]||0)>=need[t])}
@@ -648,7 +668,8 @@ function newOrder(){
   let pool=DISHES.filter(x=>x.n.every(t=>t<=mt)&&!taken.includes(x.d));
   // lean toward harder dishes as you level
   pool.sort(()=>Math.random()-.5);if(Math.random()<(S.level>=6?.3:.5))pool.sort((a,b)=>Math.max(...b.n)-Math.max(...a.n));
-  const x=pool[Math.floor(Math.random()*Math.min(pool.length,4))]||DISHES[1];
+  let x=pool[Math.floor(Math.random()*Math.min(pool.length,4))]||DISHES[1];
+  {const want=lvNeeds('dish').map(g=>g.d).filter(d=>!taken.includes(d));if(want.length&&Math.random()<.45){const w=DISHES.find(y=>y.d===want[0]);if(w&&dishTier(w)<=mt)x=w}}  // the dish this level asks for comes round often
   const names=S.orders.concat(S.queue||[]).map(o=>o&&o.who).concat(S.away||[]),people=SOUKS[soukIdx()].people.filter(p=>!names.includes(p));
   return {d:x.d,n:x.n.slice(),who:freeName(people,SOUKS[soukIdx()].people),col:pick(FACES),fresh:true};
 }
@@ -666,18 +687,68 @@ function plus(el,txt){const {x,y}=center(el),d=document.createElement('div');d.c
 function flyCoins(fromEl,n,done){const a=center(fromEl),b=center($('coinChip')),fx=$('fx');let left=n;for(let i=0;i<n;i++){const c=document.createElement('div');c.className='flycoin coin';c.style.left=(a.x-9+(Math.random()*30-15))+'px';c.style.top=(a.y-9)+'px';fx.appendChild(c);setTimeout(()=>{c.style.transform=`translate(${b.x-a.x}px,${b.y-a.y}px) scale(.8)`;c.style.opacity='0'},40+i*60);setTimeout(()=>{c.remove();sfx.coin();if(--left===0&&done)done()},800+i*60)}}
 function shake(){const a=$('app');a.classList.remove('shake');void a.offsetWidth;a.classList.add('shake')}
 
+/* ---------- the campaign: 30 levels, 10 per souq, each with goals you can see ----------
+   A level ends when its 2-3 goals are done; it pays, earns 1-3 stars (fewer walkouts, more stars) and
+   unlocks something: a new spice, new dishes, and at every tenth level the next souq. Level 30 is the ending;
+   after it the game is free play. Goals that are facts (the stall) are read from the game, the rest are counted. */
+function tierAt(L){let t=2;for(const k in NEWTIER)if(L>=+k)t=NEWTIER[k];return t}
+function dishTier(x){return Math.max(...x.n)}
+function lvDish(L,newest){const t=tierAt(L),pool=DISHES.filter(x=>newest?dishTier(x)===t:dishTier(x)<=t);return (pool.length?pool:DISHES.filter(x=>dishTier(x)<=t))[(L*7)%Math.max(1,pool.length||1)]||DISHES[1]}
+function levelPlan(L){if(L>LV_MAX)return null;const s=Math.floor((L-1)/10),i=(L-1)%10+1,g=[],nt=NEWTIER[L];
+  if(nt!=null)g.push({k:'make',t:nt,goal:1});
+  if(i<=8||i===10)g.push({k:'stall',goal:i===10?8:i});
+  if(i===10){g.push({k:'dish',d:lvDish(L+1,false).d,goal:2});if(g.length<3)g.push({k:'serve',goal:12+s*3})}
+  else{if(g.length<3)g.push(nt!=null?{k:'dish',d:lvDish(L,true).d,goal:2}:i%3===0?{k:'combo',goal:3+s}:i===7?{k:'happy',goal:5+s*2}:L>=5&&i%4===1?{k:'critic',goal:4}:{k:'dish',d:lvDish(L,false).d,goal:2+s});
+    if(g.length<3)g.push({k:'serve',goal:6+i+s*2})}
+  return g}
+const LVTXT={make:x=>`Make your first ${SPICES[x.t].n}`,stall:x=>x.goal>=8?'Restore the whole stall':`Restore ${x.goal} of 8 stall parts`,dish:x=>`Serve ${x.goal} ${x.d}`,
+  serve:x=>`Serve ${x.goal} customers`,combo:x=>`Get a ${x.goal}× combo`,happy:x=>`Serve ${x.goal} smiling customers`,critic:x=>`Get a ${x.goal}★ review from a critic`,earn:x=>`Earn ${x.goal} coins`};
+function lvState(){if(S.duel)return null;const L=S.level;if(!S.lv||S.lv.n!==L)S.lv={n:L,c:{},walk:0};return S.lv}
+function lvProg(x){const st=lvState();if(!st)return 0;if(x.k==='stall')return Math.min(x.goal,builtN());if(x.k==='make')return st.c['make'+x.t]?1:0;
+  return Math.min(x.goal,st.c[x.k==='dish'?'dish:'+x.d:x.k]||0)}
+function lvNeeds(k){const p=levelPlan(S.level);return p?p.filter(x=>x.k===k&&lvProg(x)<x.goal):[]}
+function lvDoneN(){const p=levelPlan(S.level);return p?p.filter(x=>lvProg(x)>=x.goal).length:0}
+function lvEvent(k,v){if(S.duel)return;const p=levelPlan(S.level);if(!p)return;const st=lvState(),before=p.map(x=>lvProg(x)>=x.goal);
+  if(k==='make')st.c['make'+v]=1;else if(k==='dish')st.c['dish:'+v]=(st.c['dish:'+v]||0)+1;else if(k==='combo'||k==='critic')st.c[k]=Math.max(st.c[k]||0,v);
+  else if(k==='walk')st.walk++;else if(k!=='stall')st.c[k]=(st.c[k]||0)+(v||1);
+  const now=p.map(x=>lvProg(x)>=x.goal);const fresh=p.filter((x,j)=>now[j]&&!before[j]);
+  if(now.every(Boolean)){setTimeout(levelComplete,700);return}
+  if(fresh.length)setTimeout(()=>toast(`<b>✔ ${LVTXT[fresh[0].k](fresh[0])}</b>Level ${S.level}: ${now.filter(Boolean).length} of ${p.length} goals done.`,3000),600);
+  renderTop()}
+function lvStars(st){return st.walk===0?3:st.walk<=2?2:1}
+function levelComplete(){if(S.duel)return;const L=S.level,p=levelPlan(L);if(!p||!p.every(x=>lvProg(x)>=x.goal)||S.lvDoneAt===L)return;S.lvDoneAt=L;
+  const st=lvState(),stars=lvStars(st);S.stars3=S.stars3||{};S.stars3[L]=Math.max(S.stars3[L]||0,stars);
+  const coins=80+L*20;S.coins+=coins;const nl=L+1,nt=NEWTIER[nl],newDishes=DISHES.filter(x=>dishTier(x)===tierAt(nl)&&tierAt(nl)>tierAt(L)).map(x=>x.d);
+  S.level=nl;S.lv=null;S.energy=Math.max(S.energy,eMax());sfx.level();
+  const list=[`<span class="coin"></span>+${coins} coins`,'<span class="bolt"></span>Energy refilled'];
+  if(nt!=null)list.push(`${jarHTML(nt,true)}New spice next: ${SPICES[nt].n}`);if(newDishes.length)list.push(`🍽️ New dishes: ${newDishes.join(', ')}`);
+  const souqEnd=L%10===0;
+  celebrate({art:`<div class="lvstars">${'★'.repeat(stars)}<span>${'★'.repeat(3-stars)}</span></div>`,title:`Level ${L} complete!`,text:stars===3?'Not one customer walked out. Perfect!':stars===2?'Great work. Fewer walkouts for three stars.':'Done! Keep customers happy for more stars.',list,btn:souqEnd&&L<LV_MAX?'Travel on 🐪':L>=LV_MAX?'See the ending':'Next level'});
+  if(souqEnd&&L<LV_MAX&&S.souk<STALLS.length-1){S.souk++;S.built=0;S.orders=[];S.queue=[];while(S.orders.length<3)S.orders.push(newOrder());S.orders.forEach(o=>o.t=Date.now());
+    celebrate({art:'<div style="font-size:72px;line-height:1">🐪</div>',title:'Welcome to '+SOUKS[S.souk].n,text:'A new stall to restore, new faces and new spices. Your coins and spices come with you.',list:[`Levels ${L+1} to ${L+10}`],btn:'Open the stall'})}
+  if(L>=LV_MAX){const tot=Object.values(S.stars3).reduce((a,b)=>a+b,0);
+    celebrate({art:`<div style="width:110px;height:110px;margin:auto;border-radius:50%;background:#ead2a8;overflow:hidden;box-shadow:0 0 0 4px #ffd66b,0 0 30px rgba(255,214,107,.8)">${personSVG('Jaddi Saeed','happy')}</div>`,title:'The end: Jaddi’s dream came true',text:'Three souqs, three stalls, one family. “The caravan road is ours again, ya wildi. The stall is yours now.”',list:[`⭐ ${tot} of ${LV_MAX*3} stars`,'Keep playing: daily goals, Jaddi’s stamp card, duels and friends never end.','Replay any level for more stars? Coming soon.'],btn:'Shukran, Jaddi!'})}
+  save();render();setTimeout(()=>{const np=levelPlan(S.level);if(np)toast(`<b>Level ${S.level}</b>${np.map(x=>LVTXT[x.k](x)).join(' · ')}`,4200)},2500)}
+function openLevel(){if(S.duel)return;audio();const L=S.level,p=levelPlan(L);
+  $('lvTitle').textContent=p?`Level ${L}`:'Free play';
+  $('lvSub').textContent=p?`${SOUKS[soukIdx()].n} · level ${(L-1)%10+1} of 10`:'You finished all 30 levels. Daily goals, the stamp card, duels and friends carry on.';
+  $('lvList').innerHTML=p?p.map(x=>{const v=lvProg(x),d=v>=x.goal;return `<div class="glrow${d?' done':''}"><div><b>${LVTXT[x.k](x)}</b><div class="xpbar"><i style="width:${Math.min(100,v/x.goal*100)}%"></i></div></div><span>${d?'✓':x.goal>1?v+'/'+x.goal:''}</span></div>`}).join(''):'';
+  const nt=p&&NEWTIER[L+1];$('lvNext').innerHTML=p?(nt!=null?`Next level brings a new spice: ${jarHTML(nt,true)} <b>${SPICES[nt].n}</b>`:L%10===0&&L<LV_MAX?`Finish this level to travel to <b>${SOUKS[Math.min(2,Math.floor(L/10))].n}</b> 🐪`:`Finish all goals to complete the level. Fewer walkouts = more ⭐`):'';
+  const st=S.stars3||{};$('lvMap').innerHTML=SOUKS.map((sq,si)=>`<div class="lvrow"><b>${esc(sq.n)}</b><div class="lvdots">${Array.from({length:10},(_,j)=>{const n=si*10+j+1,cur=n===L,done=n<L;return `<span class="lvd${done?' done':''}${cur?' cur':''}" aria-label="Level ${n}${done?', '+(st[n]||1)+' stars':''}">${n}<i>${done?'★'.repeat(st[n]||1):''}</i></span>`}).join('')}</div></div>`).join('');
+  openSheet('lvSheet')}
+
 /* ---------- render ---------- */
 function renderTop(){
   if(S.duel){$('coins').textContent=S.coins;$('energy').textContent=clock(duelLeft());$('etimer').textContent='';$('lvl').textContent=duel&&duel.code?'Code '+duel.code:duel&&duel.challenge?'Beat '+duel.challenge.from+' · '+duel.challenge.score:'Challenge round';$('soukName').textContent='Souk duel';$('xp').style.width=(duelLeft()/DUEL_S*100)+'%';$('sack').classList.remove('empty');return}
   $('coins').textContent=S.coins;$('energy').textContent=S.energy;
-  $('lvl').textContent='Level '+S.level;$('xp').style.width=Math.min(100,S.xp/xpNeed()*100)+'%';
+  {const p=levelPlan(S.level),d=lvDoneN();$('lvl').textContent=p?`Level ${S.level} · ${d}/${p.length} goals ▸`:'Free play ▸';$('xp').style.width=(p?d/p.length*100:100)+'%'}
   const k=soukIdx();$('soukName').textContent=SOUKS[k].n;document.body.dataset.souk=k;
   $('sack').classList.toggle('empty',S.energy<=0);
 }
 function freeName(free,all){if(free.length)return pick(free);const busy=S.orders.concat(S.queue||[]).map(o=>o&&o.who);const b=all.filter(p=>!busy.includes(p));return pick(b.length?b:all)}
 function fillQueue(){if(!S.queue)S.queue=[];while(S.queue.length<3){const o=newOrder();o.fresh=false;S.queue.push(o)}}
 function nextCustomer(k){fillQueue();const o=S.queue.shift();o.fresh=true;o.t=Date.now();if(!S.duel&&S.level>=3&&!S.orders.some(x=>x&&x.vip)&&Math.random()<.15)o.vip=true;
-  else if(!S.duel&&(S.served||0)>=10&&Date.now()>nextCritic&&!S.orders.some(x=>x&&x.critic)&&Math.random()<.35){o.critic=true;nextCritic=Date.now()+240000+Math.random()*180000;setTimeout(()=>toast('<b>📝 A food critic is in line!</b>Serve them fast for a five-star review.',3200),500)}S.orders[k]=o;fillQueue();return o}
+  else if(!S.duel&&!S.orders.some(x=>x&&x.critic)&&(lvNeeds('critic').length?Math.random()<.5&&Date.now()>nextCritic-200000:(S.served||0)>=10&&Date.now()>nextCritic&&Math.random()<.35)){o.critic=true;nextCritic=Date.now()+240000+Math.random()*180000;setTimeout(()=>toast('<b>📝 A food critic is in line!</b>Serve them fast for a five-star review.',3200),500)}S.orders[k]=o;fillQueue();return o}
 function renderQueue(){const q=$('queue');if(!q)return;fillQueue();fightSync();
   const f=fight;q.classList.toggle('fighting',!!f);
   q.innerHTML=`<span class="qlabel">${f?'Tap!':'In line'}</span>`+S.queue.map((o,i)=>{const in_=f&&(i===f.a||i===f.b);
@@ -877,7 +948,7 @@ function renderStall(newest){
   const n=builtN(),st=stall();let h=S.duel?'':`<div class="jsit${n>=8?' proud':''}" id="jaddi" title="Jaddi Saeed">${personSVG('Jaddi Saeed',n===0?'wait':n<8?'calm':'happy')}</div>`;
   const from=Math.max(0,n-2);if(from)h+=`<div class="deco more">+${from}</div>`;for(let i=from;i<n;i++)h+=`<div class="deco${newest===i?' new':''}" title="${esc(st.steps[i].n)}">${DECOR[i].s}</div>`;
   const nx=st.steps[n],can=nx&&S.coins>=nx.c;
-  h+=`<button class="restore${can||(n>=8&&S.souk<STALLS.length-1)?' can':''}${n>=8&&S.souk<STALLS.length-1?' travel':''}" id="restoreBtn" type="button" aria-label="Restore the stall">${n<8?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 4l6 6-3 3-6-6zM11 7l-8 8 3 3 8-8"/></svg>${n}/8`:S.souk<STALLS.length-1?'🐪 Travel':'8/8 ✓'}</button>`;
+  h+=`<button class="restore${can?' can':''}" id="restoreBtn" type="button" aria-label="Restore the stall">${n<8?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 4l6 6-3 3-6-6zM11 7l-8 8 3 3 8-8"/></svg>${n}/8`:'8/8 ✓'}</button>`;
   $('stall').innerHTML=h;$('restoreBtn').onclick=openStall;
   if(can&&!S.duel&&S.jHint!==S.souk*10+n&&S.guide>=3){const key=S.souk*10+n;setTimeout(()=>{if(S.jHint!==key&&jaddiSay(n===0?'You have enough coins! Tap the hammer and fix my lantern.':'Enough coins for the next piece, habibi! 🔨',true))S.jHint=key},700)}
 }
@@ -894,19 +965,19 @@ function renderStallSheet(){const st=stall(),n=builtN(),nx=st.steps[n];
   $('stList').innerHTML=st.steps.map((x,i)=>{const done=i<n,next=i===n;const perk=x.perk==='wait'?'Customers wait 15s longer':'Tips +5%';
     return `<div class="strow${done?' done':''}${next?' next':''}"><span class="sti">${DECOR[i].s}</span><div><b>${esc(x.n)}</b><small>${done?'Done · '+perk:perk}</small></div>${next?`<button class="btn warm" id="buildBtn" type="button"${S.coins<x.c?' disabled':''}><span class="coin"></span>${x.c}</button>`:done?'<span class="tick">✓</span>':`<span class="cost"><span class="coin"></span>${x.c}</span>`}</div>`}).join('');
   const b=$('buildBtn');if(b)b.onclick=()=>build();
-  const tv=$('travelBtn');tv.hidden=!(n>=8&&S.souk<STALLS.length-1);if(!tv.hidden)tv.textContent='Travel to '+SOUKS[S.souk+1].n;
+  const tv=$('travelBtn');tv.hidden=true;if(!tv.hidden)tv.textContent='Travel to '+SOUKS[S.souk+1].n;
   $('stNeed').textContent=nx&&S.coins<nx.c?`You need ${nx.c-S.coins} more coins. Serve customers to earn them.`:'';}
 function build(){const st=stall(),n=builtN(),x=st.steps[n];if(!x||S.coins<x.c)return;
-  S.coins-=x.c;S.built=n+1;sfx.level();goal('build');renderStall(n);render();$('stallSheet').hidden=true;
+  S.coins-=x.c;S.built=n+1;sfx.level();goal('build');lvEvent('stall');renderStall(n);render();$('stallSheet').hidden=true;
   celebrate({art:`<div style="width:96px;height:96px;margin:auto">${DECOR[n].s}</div>`,title:x.n+'!',text:`“${x.say}” — Jaddi Saeed`,
     list:[x.perk==='wait'?'Customers will wait 15 seconds longer':'Customers tip 5% more',`${n+1} of 8 restored`],btn:n+1>=8?'See the stall':'Keep selling'});
-  if(n+1>=8&&S.souk<STALLS.length-1){const from=S.souk,to=SOUKS[from+1].n.replace(/^The /,'the ');setTimeout(()=>{if(S.souk===from&&!S.duel)jaddiSay(`Ya wildi, ${to} is waiting for us! Tap 🐪 Travel.`,true)},6000)}
+  if(n+1>=8&&S.souk<STALLS.length-1){const from=S.souk;setTimeout(()=>{if(S.souk===from&&!S.duel)jaddiSay('The stall is whole again! Finish this souq’s levels and we travel on.',true)},6000)}
   if(n+1>=8){const END=[['Jaddi is back at his stall!','For the first time in years, Jaddi stands behind his counter in the souq. “It smells just like the day I opened it. Our name is back in the souk.”'],
       ['Jaddi visits the medina!','Jaddi travels to the medina and his old friend Youssef runs to hug him. “Two stalls, two cities, one family.”'],
       ['Jaddi’s dream came true','Three souqs, one family. Jaddi hands you his old brass key. “The caravan road is ours again. The stall is yours now, my child.”']][S.souk]||[];
     celebrate({art:`<div style="width:110px;height:110px;margin:auto;border-radius:50%;background:#ead2a8;overflow:hidden;box-shadow:0 0 0 4px #ffd66b,0 0 30px rgba(255,214,107,.8)">${personSVG('Jaddi Saeed','happy')}</div>`,title:END[0],text:END[1],list:['8 of 8 restored · 8 new memories in Jaddi’s book'],btn:S.souk<STALLS.length-1?'See the stall':'Keep selling'});
     setTimeout(()=>{renderStallSheet()},10)}}
-$('travelBtn').onclick=()=>{if(builtN()<8||S.souk>=STALLS.length-1)return;S.souk++;S.built=0;$('stallSheet').hidden=true;
+$('travelBtn').onclick=()=>{if(builtN()<8||S.souk>=STALLS.length-1||S.level<=(S.souk+1)*10)return;  // a souq is left by finishing its levelsS.souk++;S.built=0;$('stallSheet').hidden=true;
   S.orders=[];S.queue=[];while(S.orders.length<3)S.orders.push(newOrder());S.orders.forEach(o=>o.t=Date.now());renderStall();render();
   celebrate({art:'<div style="font-size:72px;line-height:1">🐪</div>',title:'Welcome to '+SOUKS[S.souk].n,text:'A new stall to restore, new faces, new stories.',list:['Your coins and spices come with you'],btn:'Open the stall'})};
 function renderChest(){
@@ -955,7 +1026,7 @@ function sack(){
   if(S.energy<=0){sfx.no();toast('<b>Out of energy</b>It refills by itself, 1 every 6 seconds. Or take a tea break in the Shop.');return}
   const empty=S.cells.map((v,i)=>v==null?i:-1).filter(i=>i>=0);
   if(!empty.length){sfx.no();shake();setTip('Your tray is full. Merge or serve to make room.');return}
-  const i=pick(empty);const r=Math.random(),base=S.level>=9?2:S.level>=6?1:0;const t=Math.min(MAX-1,base+(S.level>=4&&r<.1?2:r<SACK_UP[S.sackLv].p?1:0));
+  const i=pick(empty);const r=Math.random(),base=Math.max(0,maxTier()-4);const t=Math.min(MAX-1,base+(S.level>=4&&r<.1?2:r<SACK_UP[S.sackLv].p?1:0));
   if(S.energy>=eMax())S.eAt=Date.now();
   S.energy--;S.cells[i]=t;if(S.guide===0)S.guide=1;sfx.drop();render();mark(i,'drop');
   setTip(`You got <b>${SPICES[t].n}</b>. Find another to merge.`);
@@ -1024,20 +1095,20 @@ function serve(k,el){
   el.insertAdjacentHTML('beforeend',`<div class="bubble">${mood==='cross'?pick(['Finally…','Took a while.','Hmm, OK.']):lineFor(o.who,'thx')[0]}</div>`);
   if(!S.duel){if(tipAmt>0)setTimeout(()=>setTip(`<b>${esc(o.who)} left a tip: +${tipAmt}</b><br>Fast service pays.`),300);else if(tipAmt<0)setTimeout(()=>setTip(`<b>${esc(o.who)} paid ${-tipAmt} less.</b><br>They waited too long.`),300)}
   if(!S.duel){if(rush){rush.served++;rush.coins+=pay}if(stars)criticReview(o,stars)}
-  goal('serve');if(mood==='calm')goal('happy');goal('earn',pay);if(S.combo>=2)goal('combo',S.combo);
+  lvEvent('dish',o.d);if(stars)lvEvent('critic',stars);goal('serve');if(mood==='calm')goal('happy');goal('earn',pay);if(S.combo>=2)goal('combo',S.combo);
   if(S.combo>1){const c=document.createElement('div');c.className='combo';c.textContent=`Combo ×${S.combo}! +${bonus}`;$('app').appendChild(c);setTimeout(()=>c.remove(),1150);[0,.08,.16].forEach((d,i)=>tone(880*(1+i*.25)*(1+S.combo*.05),.15,'triangle',.14,d))}
   plus(el,'+'+pay);sel=null;renderBoard();const st=S;
   if(st.duel){st.coins+=pay;renderTop();pushScore();flyCoins(el,Math.min(10,2+Math.floor(pay/12)),()=>{});
     setTimeout(()=>{if(S!==st)return;const sv=S;S=st;nextCustomer(k);S=sv;render()},700);setTip(S.combo>1?'Combo! Keep serving.':`${S.served} served. Keep going!`);return}
   flyCoins(el,Math.min(10,2+Math.floor(pay/12)),()=>{st.coins+=pay;if(S===st){renderTop();save()}});
   flyStar(el,1);
-  if(S.guide===2){S.guide=3;guide();setTimeout(()=>{toast('<b>You\'ve got it!</b>Earn coins, then tap the hammer to restore Jaddi\'s stall.',4200);setTimeout(daily,4000)},1200)}
+  if(S.guide===2){S.guide=3;guide();setTimeout(()=>{toast('<b>You\'ve got it!</b>Tap <b>Level 1</b> at the top to see your goals. Finish them to unlock new spices.',4600);setTimeout(daily,4000)},1200)}
   S.xp+=xp;
   setTimeout(()=>{if(S!==st)return;el.classList.add('leave');setTimeout(()=>{if(S!==st)return;nextCustomer(k);levelCheck();render()},320)},800);
   setTip(S.combo>1?`Combo! Serve again within 15 seconds to keep it going.`:`${o.who} loved the ${o.d}. ${S.served} customers served.`);
 }
 function levelCheck(){
-  while(S.xp>=xpNeed()){S.xp-=xpNeed();const before=soukIdx();S.level++;S.energy=Math.max(S.energy,eMax());sfx.level();
+  while(false&&S.xp>=xpNeed()){S.xp-=xpNeed();const before=soukIdx();S.level++;S.energy=Math.max(S.energy,eMax());sfx.level();
     const list=['<span class="bolt"></span>Energy refilled'];
     if(S.level+2<=MAX)list.push(`${jarHTML(maxTier(),true)}Customers now ask for ${SPICES[maxTier()].n}`);
     celebrate({art:`<div style="width:90px;height:100px;margin:auto">${jarHTML(maxTier())}</div>`,title:`Level ${S.level}!`,text:'Word is spreading about your stall.',list});
@@ -1076,7 +1147,7 @@ $('fbSend').onclick=async()=>{if(!fb.fun)return;const m=fbBody();S.nick=m.name==
   const url=`mailto:${FB_TO}?subject=${encodeURIComponent(m.subject)}&body=${encodeURIComponent(m.body)}`;location.href=url;
   $('fbMsg').innerHTML='Your email app should open with everything filled in. Just press Send. 🙏<br><button type="button" class="fblink" id="fbCopy">Email didn’t open? Copy it instead</button>';
   $('fbCopy').onclick=async()=>{try{await navigator.clipboard.writeText(m.subject+'\n\n'+m.body);$('fbMsg').textContent='Copied. Paste it in a message to Nasser or email '+FB_TO+'.'}catch(e){$('fbMsg').textContent='Please email '+FB_TO}}};
-$('fbOpen1').onclick=openFb;$('memBtn').onclick=openMem;$('introFace').innerHTML=personSVG('Jaddi Saeed','wait');$('fbOpen2').onclick=openFb;
+$('soukBtn').onclick=openLevel;$('fbOpen1').onclick=openFb;$('memBtn').onclick=openMem;$('introFace').innerHTML=personSVG('Jaddi Saeed','wait');$('fbOpen2').onclick=openFb;
 const GOALS={serve:n=>`Serve ${n} customers`,happy:n=>`Serve ${n} customers while they smile`,earn:n=>`Earn ${n} coins`,combo:n=>`Get a ${n}× combo`,make:t=>`Make a ${SPICES[t].n}`,build:()=>'Restore one part of the stall'};
 /* Jaddi's stamp card: every day you finish your three goals earns a stamp. Seven stamps and Jaddi hands you one of his keepsakes.
    A missed day never wipes the card (the streak is the strict one); the card only ever moves forward. */
@@ -1091,12 +1162,12 @@ function nextKeep(){return KEEPS[(S.keeps||[]).length%KEEPS.length]}
 function stampCard(){const n=S.stamps||0,k=nextKeep();
   return `<div class="stampc"><div class="sch"><b>Jaddi’s stamp card</b><span>${n} of ${STAMPS} · next: ${k.e} ${k.n}</span></div><div class="srow">${Array.from({length:STAMPS},(_,i)=>`<i class="${i<n?'on':''}${i===STAMPS-1?' gift':''}">${i<n?'🌶️':i===STAMPS-1?k.e:''}</i>`).join('')}</div></div>`}
 function goals(){if(S.duel)return null;if(!S.dg||S.dg.day!==today()){
-    const L=S.level,pool=[{k:'serve',goal:12+L*3},{k:'happy',goal:5+L},{k:'earn',goal:400+L*150},{k:'combo',goal:L>=3?4:3},{k:'make',goal:Math.min(maxTier(),2+(L>2?1:0))}];
+    const L=Math.min(10,S.level),pool=[{k:'serve',goal:12+L*3},{k:'happy',goal:5+L},{k:'earn',goal:400+L*150},{k:'combo',goal:L>=3?4:3},{k:'make',goal:Math.min(maxTier(),2+(L>2?1:0))}];
     if(builtN()<8)pool.push({k:'build',goal:1});pool.sort(()=>Math.random()-.5);
     const yest=new Date(Date.now()-864e5).toISOString().slice(0,10);if(S.dg&&S.dg.claimed!==yest&&S.dg.claimed!==today())S.streak=0;
     S.dg={day:today(),list:pool.slice(0,3).map(g=>({...g,p:0})),claimed:S.dg&&S.dg.claimed||''}}
   return S.dg}
-function goal(k,v=1){const g=goals();if(!g)return;let news=null;g.list.forEach(x=>{if(x.k!==k||x.p>=x.goal)return;
+function goal(k,v=1){try{lvEvent(k,v)}catch(e){}const g=goals();if(!g)return;let news=null;g.list.forEach(x=>{if(x.k!==k||x.p>=x.goal)return;
     if(k==='make'){if(v===x.goal)x.p=x.goal}else if(k==='combo'){x.p=Math.max(x.p,Math.min(v,x.goal))}else x.p=Math.min(x.goal,x.p+v);
     if(x.p>=x.goal)news=x});
   if(news){const all=g.list.every(x=>x.p>=x.goal);setTimeout(()=>toast(`<b>Goal done: ${GOALS[news.k](news.goal)}</b>${all?'All three done. Tap the scroll to collect your gift!':`${g.list.filter(x=>x.p>=x.goal).length} of 3 goals today.`}`,3200),900)}
