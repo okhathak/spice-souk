@@ -692,67 +692,52 @@ const UAE={"hi": [["I came all the way across town!", ""]], "wait": [["My karak 
 function cOf(who){return (LOOK[who]||{}).c||'ae'}function flagOf(who){return FLAG[cOf(who)]||''}
 function lineFor(who,kind){const loc=(LANG[cOf(who)]||{})[kind]||[];let gen=(GEN[kind]||[]).concat(soukIdx()===0?(UAE[kind]||[]):[]);
   const mustLocal=['claim','back','calm'].includes(kind);const L=loc.length&&(mustLocal||!gen.length||Math.random()<.65)?pick(loc):pick(gen.length?gen:loc);return [flagOf(who)+' '+L[0],L[1]||'']}
-/* fight voices: the phone's own speech voices, each customer in their own language and accent; follows the Sound switch */
-const VLANG={ae:'ar-AE',sa:'ar-SA',kw:'ar-KW',eg:'ar-EG',lb:'ar-LB',ma:'ar-MA',in:'hi-IN',pk:'ur-PK',bd:'bn-BD',ph:'fil-PH',gb:'en-GB',us:'en-US',ru:'ru-RU',cn:'zh-CN',ke:'sw-KE',fr:'fr-FR',es:'es-ES',de:'de-DE',br:'pt-BR',ng:'en-NG',it:'it-IT',tr:'tr-TR',ir:'fa-IR',jp:'ja-JP',kr:'ko-KR'};
-/* how each one sounds speaking English: their own accent where the phone has it */
-const ENACC={gb:['en-GB'],us:['en-US'],in:['en-IN'],pk:['en-IN'],bd:['en-IN'],ph:['en-PH','en-US'],ke:['en-KE','en-ZA'],ng:['en-NG','en-ZA'],
-  ae:['en-GB'],sa:['en-GB'],kw:['en-GB'],eg:['en-GB'],lb:['en-GB'],ma:['fr-FR','en-GB'],ir:['en-GB'],cn:['en-AU','en-US'],jp:['en-US'],kr:['en-US'],
-  ru:['ru-RU'],fr:['fr-FR'],es:['es-ES'],de:['de-DE'],br:['pt-BR'],it:['it-IT'],tr:['tr-TR']};
-/* what a romanised line sounds like in its own language: spoken in its own script by a voice of that language */
-const VTXT={
- "Yallaaa!":[["ar","يلااا!"]],"Khalas, ana ywa'an!":[["ar","خلاص، أنا يوعان!"]],"Ana awal wahid! Yalla!":[["ar","أنا أول واحد! يلا!"]],
- "La la, ana gablak!":[["ar","لا لا، أنا قبلك!"]],"Yalla, kil wahed b dora!":[["ar","يلا، كل واحد بدوره!"]],"Khalas, khalas…":[["ar","خلاص، خلاص"]],"Zain, tafaddal":[["ar","زين، تفضل"]],
- "Ya akhi, yalla!":[["ar","يا أخي، يلا!"]],"Ya akhi, dori ana!":[["ar","يا أخي، دوري أنا!"]],"Abad, ana gablak!":[["ar","أبد، أنا قبلك!"]],"Tayyib, tafaddal":[["ar","طيب، تفضل"]],
- "Yalla ad!":[["ar","يلا عاد!"]],"Ana gabl, tara!":[["ar","أنا قبل، ترى!"]],"La, ana gablak!":[["ar","لا، أنا قبلك!"]],"Zain, zain":[["ar","زين، زين"]],
- "Ya amm, ana gayy men el sobh!":[["ar","يا عم، أنا جاي من الصبح!"]],"Ya amm, ana wa'ef hena men badri!":[["ar","يا عم، أنا واقف هنا من بدري!"]],"Mesh ma'oul! Ana el awel!":[["ar","مش معقول! أنا الأول!"]],"Mashi, mashi":[["ar","ماشي، ماشي"]],
- "Yalla ba'a!":[["ar","يلا بقى!"]],"Ya habibi, ana awwal wahed!":[["ar","يا حبيبي، أنا أول واحد!"]],"Ma ba'ref, bas ana kamen jou'an!":[["ar","ما بعرف، بس أنا كمان جوعان!"]],"Tayyeb habibi":[["ar","طيب حبيبي"]],
- "Safi, zreb shwiya!":[["ar","صافي، زرب شوية!"]],"Khoya, ana li jit lowel!":[["ar","خويا، أنا لي جيت الأول!"]],"Wakha, walakin ana jit lowel!":[["ar","واخا، ولكن أنا جيت الأول!"]],"Safi, safi":[["ar","صافي، صافي"]],
- "Arre bhai, kitna time?":[["hi","अरे भाई, कितना टाइम?"]],"Arre bhai, main pehle aaya tha!":[["hi","अरे भाई, मैं पहले आया था!"]],"Kya baat hai, line toh dekho!":[["hi","क्या बात है, लाइन तो देखो!"]],"Theek hai, theek hai":[["hi","ठीक है, ठीक है"]],
- "Njan aadyam vannu, machane!":[["ml","ഞാൻ ആദ്യം വന്നു, മച്ചാനേ!"]],"Seri, seri":[["ml","ശരി, ശരി"]],
- "Yaar, jaldi karo!":[["ur","یار، جلدی کرو!"],["hi","यार, जल्दी करो!"]],"Bhai jaan, meri baari hai!":[["ur","بھائی جان، میری باری ہے!"],["hi","भाई जान, मेरी बारी है!"]],
- "Bhai, aaram se! Sab ko milega!":[["ur","بھائی، آرام سے! سب کو ملے گا!"],["hi","भाई, आराम से! सब को मिलेगा!"]],"Chalo, theek hai":[["ur","چلو، ٹھیک ہے"],["hi","चलो, ठीक है"]],
- "Taratari koren!":[["bn","তাড়াতাড়ি করেন!"]],"Bhai, ami age eshechi!":[["bn","ভাই, আমি আগে এসেছি!"]],"Bhai, ektu dhoirjo!":[["bn","ভাই, একটু ধৈর্য!"]],"Accha, thik ache":[["bn","আচ্ছা, ঠিক আছে"]]};
-/* recorded voices (Microsoft neural, made once on GitHub by tools/make-voices.py): a man's and a woman's voice per nationality, and the accent each uses for English */
-const EDGE={ae:['ar-AE-HamdanNeural','ar-AE-FatimaNeural'],sa:['ar-SA-HamedNeural','ar-SA-ZariyahNeural'],kw:['ar-KW-FahedNeural','ar-KW-NouraNeural'],eg:['ar-EG-ShakirNeural','ar-EG-SalmaNeural'],lb:['ar-LB-RamiNeural','ar-LB-LaylaNeural'],ma:['ar-MA-JamalNeural','ar-MA-MounaNeural'],
- in:['hi-IN-MadhurNeural','hi-IN-SwaraNeural'],pk:['ur-PK-AsadNeural','ur-PK-UzmaNeural'],bd:['bn-BD-PradeepNeural','bn-BD-NabanitaNeural'],ph:['fil-PH-AngeloNeural','fil-PH-BlessicaNeural'],gb:['en-GB-RyanNeural','en-GB-SoniaNeural'],us:['en-US-GuyNeural','en-US-JennyNeural'],
- ru:['ru-RU-DmitryNeural','ru-RU-SvetlanaNeural'],cn:['zh-CN-YunxiNeural','zh-CN-XiaoxiaoNeural'],ke:['sw-KE-RafikiNeural','sw-KE-ZuriNeural'],fr:['fr-FR-HenriNeural','fr-FR-DeniseNeural'],es:['es-ES-AlvaroNeural','es-ES-ElviraNeural'],de:['de-DE-ConradNeural','de-DE-KatjaNeural'],
- br:['pt-BR-AntonioNeural','pt-BR-FranciscaNeural'],ng:['en-NG-AbeoNeural','en-NG-EzinneNeural'],it:['it-IT-DiegoNeural','it-IT-ElsaNeural'],tr:['tr-TR-AhmetNeural','tr-TR-EmelNeural'],ir:['fa-IR-FaridNeural','fa-IR-DilaraNeural'],jp:['ja-JP-KeitaNeural','ja-JP-NanamiNeural'],kr:['ko-KR-InJoonNeural','ko-KR-SunHiNeural']};
-const EDGE_ML=['ml-IN-MidhunNeural','ml-IN-SobhanaNeural'];
-const EDGE_EN={in:['en-IN-PrabhatNeural','en-IN-NeerjaNeural'],pk:['en-IN-PrabhatNeural','en-IN-NeerjaNeural'],bd:['en-IN-PrabhatNeural','en-IN-NeerjaNeural'],ke:['en-KE-ChilembaNeural','en-KE-AsiliaNeural'],ph:['en-PH-JamesNeural','en-PH-RosaNeural']};
-/* which recording a line needs: the text the voice reads, and the voice. tools/voice-lines.cjs runs this same code, so the game and the recorder always agree */
-function vClean(txt){return String(txt).replace(/^\S+\s/,'').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}️]/gu,'').replace(/’/g,"'").trim()}
-function clipFor(who,t,gloss){const c=cOf(who),k=femaleOf(who)?1:0;if(!EDGE[c])return null;
-  const alt=(VTXT[t]||[])[0];if(alt)return {voice:(alt[0]==='ml'?EDGE_ML:EDGE[c])[k],text:alt[1]};          // its own script
-  if(!gloss&&EDGE_EN[c])return {voice:EDGE_EN[c][k],text:t};                                                   // English, in their accent
-  return {voice:EDGE[c][k],text:t}}
-const SCRIPT=[[/[؀-ۿ]/,'ar'],[/[Ѐ-ӿ]/,'ru'],[/[぀-ヿ]/,'ja'],[/[가-힯]/,'ko'],[/[一-鿿]/,'zh'],[/[ऀ-ॿ]/,'hi'],[/[ঀ-৿]/,'bn'],[/[ഀ-ൿ]/,'ml']];
-/* voices that are sound effects, not people (desktop Safari/Chrome ship a few) */
-const NOVELTY=/bells|bubbles|zarvox|bad news|good news|jester|trinoids|whisper|wobble|boing|cellos|organ|superstar|bahh|albert|junior|ralph|deranged|hysterical|pipe/i;
-const FEM=/samantha|karen|moira|tessa|kate|serena|fiona|veena|laila|lana|amélie|amelie|audrey|anna|alice|paulina|monica|mónica|luciana|joana|yelda|milena|kyoko|yuna|tingting|sinji|meijia|lekha|sara|zuzana|ellen|ioana|damayanti|zosia|mariska|satu|nora|alva|melina|carmit|kanya|linh|marie|martha|nicky|shelley|sandy|flo|grandma|female|woman|zira|hazel|susan|heera|hoda|naayf|salma|catherine|helena|elsa|paola|seda|irina|ekaterina|haruka|ayumi|heami|huihui|yaoyao|kalpana|neerja|sapna|shruti|zariyah|amira|rehana|tanvi/i;
-const MASC=/daniel|rishi|maged|tarik|alex|fred|aaron|arthur|gordon|oliver|thomas|jorge|juan|diego|luca|yuri|otoya|reed|rocko|eddy|grandpa|xander|hattori|majed|male|man\b|david|mark|george|ravi|hemant|stefan|pablo|cosimo|tolga|pavel|ichiro|kangkang|prabhat|naayf|hamed|asad|bashkar|madhur|salman/i;
-let vList=[],vOk=false;const VS=window.speechSynthesis;
-function vLoad(){try{vList=(VS?VS.getVoices():[]).filter(v=>!NOVELTY.test(v.name))}catch(e){vList=[]}}if(VS){vLoad();VS.onvoiceschanged=vLoad}
-function vUnlock(){vManifest();if(vOk||!VS)return;vOk=true;try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;VS.speak(u)}catch(e){}}
+/* fight voices: cute made-up babble (Animal Crossing / Sims style), synthesised live — no files, no service.
+   Each syllable is a short pitched voice (a sawtooth through two vowel formants) with a tick of a consonant in front.
+   The words are in the bubble; the voice carries who they are (pitch, a little different per person), where they
+   are from (rhythm and melody) and how they feel (angry is faster, higher, punchier and yells on "!"). */
+const BAB={ae:{r:1,v:.28,w:'aaoui'},sa:{r:.95,v:.25,w:'aaou'},kw:{r:1,v:.28,w:'aaoe'},eg:{r:1.1,v:.32,w:'aaei'},lb:{r:1.05,v:.34,w:'aeia'},ma:{r:1.12,v:.3,w:'aeou'},
+  in:{r:1.18,v:.38,w:'aaie'},pk:{r:1.12,v:.34,w:'aaio'},bd:{r:1.15,v:.36,w:'aoie'},ph:{r:1.12,v:.3,w:'aaio'},gb:{r:.95,v:.22,w:'eoai'},us:{r:1,v:.3,w:'aeou'},
+  ru:{r:.95,v:.22,w:'aoie'},cn:{r:1.12,v:.55,w:'aiou'},ke:{r:1,v:.3,w:'aaiu'},fr:{r:1.05,v:.3,w:'eoua'},es:{r:1.2,v:.32,w:'aoe'},de:{r:.98,v:.2,w:'aeiu'},
+  br:{r:1.1,v:.32,w:'aoe'},ng:{r:1.05,v:.34,w:'aoe'},it:{r:1.1,v:.42,w:'aoie'},tr:{r:1.05,v:.28,w:'aeiu'},ir:{r:1,v:.3,w:'aaoe'},jp:{r:1.22,v:.3,w:'aiueo'},kr:{r:1.15,v:.3,w:'aeo'}};
+const FORM={a:[800,1200],e:[480,1800],i:[320,2300],o:[500,880],u:[350,750]};
+let vSrcs=[],vEnd=0,vQ=[],amb=null;const vBuf=new Map(),AMB_VOL=.3,VS=null;
+function vUnlock(){}
 function femaleOf(who){const L=LOOK[who]||{};return ['shayla','hijab','long'].includes(L.w)}
 function seedOf(who){return [...String(who)].reduce((a,ch)=>a*31+ch.charCodeAt(0)>>>0,7)}
-/* a voice for this person in this language: an exact accent first, then the language; a woman's or man's voice where the phone says which; always the same one for the same person */
-function vPick(tag,who,exact){const n=x=>x.lang.replace('_','-').toLowerCase(),t=tag.toLowerCase(),b=t.split('-')[0];
-  let c=t.includes('-')?vList.filter(v=>n(v)===t):[];if(!c.length&&!exact)c=vList.filter(v=>n(v)===b||n(v).startsWith(b+'-'));if(!c.length)return null;
-  const f=femaleOf(who),g=c.filter(v=>(f?FEM:MASC).test(v.name));const pool=g.length?g:c.filter(v=>!(f?MASC:FEM).test(v.name)).length?c.filter(v=>!(f?MASC:FEM).test(v.name)):c;
-  return pool[seedOf(who)%pool.length]}
-let VMAN=null,vSrc=null,vQ=[],vGen=0,amb=null;const vBuf=new Map(),AMB_VOL=.3;
-function vManifest(){if(VMAN)return;VMAN={};fetch('voices/manifest.json',{cache:'no-cache'}).then(r=>r.ok?r.json():{}).then(m=>{VMAN=m||{}}).catch(()=>{})}
-/* every voice and the background go through Web Audio: an iPhone ignores an audio element's volume, so a gain node is the only way to keep them low */
+function vClean(txt){return String(txt).replace(/^\S+\s/,'').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}️]/gu,'').replace(/’/g,"'").trim()}
 function vLoadBuf(url){if(!vBuf.has(url))vBuf.set(url,fetch(url).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((res,rej)=>ac.decodeAudioData(b,res,rej))).catch(e=>{vBuf.delete(url);throw e}));return vBuf.get(url)}
-function vStop(){vGen++;vQ.length=0;if(vSrc)try{vSrc.stop()}catch(e){}vSrc=null;try{VS&&VS.cancel()}catch(e){}}
-function playClip(file,who,o){if(!ac)return;if(!o.queue)vStop();const g=vGen;
-  vLoadBuf('voices/'+file).then(buf=>{if(g!==vGen)return;
-    const go=()=>{if(g!==vGen||S.muted||S.voiceOff)return;const src=ac.createBufferSource();src.buffer=buf;
-      src.playbackRate.value=.94+(seedOf(who)%7)*.02+(o.angry?.03:0);                                   // two men from one country never sound quite the same
-      const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3600;                         // a little further away, in the line, not in your ear
-      const gn=ac.createGain();gn.gain.value=o.angry?.26:.2;src.connect(lp).connect(gn).connect(ac.destination);
-      vSrc=src;src.onended=()=>{if(vSrc===src)vSrc=null;const n=vQ.shift();if(n)n()};src.start()};
-    if(o.queue&&vSrc)vQ.push(go);else go()}).catch(()=>{})}
+function vStop(){vQ.length=0;vSrcs.forEach(n=>{try{n.stop()}catch(e){}});vSrcs=[];vEnd=0}
+/* schedule one line of babble into any audio context (the live one, or an offline one for measuring) */
+function babbleInto(ctx,dest,t0,who,text,o){o=o||{};const c=cOf(who),B=BAB[c]||BAB.gb,f=femaleOf(who),seed=seedOf(who),rnd=(k=>()=>(k=(k*1103515245+12345)>>>0)/4294967296)(seed^text.length*2654435761);
+  const ang=!!o.angry,f0=(f?215:118)*(1+((seed%9)-4)*.035)*(ang?1.22:1);
+  const latin=/[a-z]/i.test(text),vows=(latin?(text.toLowerCase().match(/[aeiouy]/g)||[]).map(v=>v==='y'?'i':v):[]);
+  const n=Math.max(3,Math.min(13,latin?Math.round(vows.length*.85):Math.round([...text].length*.9)));
+  const dur=(ang?.085:.105)/B.r,gap=dur*.18,peak=(ang?.3:.21);
+  const out=ctx.createGain();out.gain.value=1;out.connect(dest);
+  const nodes=[];let t=t0;
+  for(let i=0;i<n;i++){const v=vows[i]||B.w[Math.floor(rnd()*B.w.length)],F=FORM[v]||FORM.a,fs=f?1.12:1;
+    const last=i===n-1,q=/[?]\s*$/.test(text),ex=/!\s*$/.test(text);
+    const step=(rnd()*2-1)*B.v*(ang?1.35:1),stress=i===0||rnd()<.25?1.12:1;
+    let p=f0*(1+step)*stress*(last&&(q||ex&&ang)?1.28:last?.88:1);
+    const d=dur*(last?1.45:(.8+rnd()*.5));
+    const osc=ctx.createOscillator();osc.type='sawtooth';osc.frequency.setValueAtTime(p,t);osc.frequency.linearRampToValueAtTime(p*(last&&(q||ex)?1.18:.94),t+d);
+    const g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(peak*(stress>1?1.15:1),t+.012);g.gain.setValueAtTime(peak*.85,t+d*.6);g.gain.exponentialRampToValueAtTime(.0008,t+d);
+    const b1=ctx.createBiquadFilter();b1.type='bandpass';b1.frequency.value=F[0]*fs;b1.Q.value=6;
+    const b2=ctx.createBiquadFilter();b2.type='bandpass';b2.frequency.value=F[1]*fs;b2.Q.value=8;
+    const g2=ctx.createGain();g2.gain.value=.7;
+    osc.connect(b1).connect(g);osc.connect(b2).connect(g2).connect(g);g.connect(out);osc.start(t);osc.stop(t+d+.02);nodes.push(osc);
+    if(rnd()<.55){const nb=ctx.createBuffer(1,Math.floor(ctx.sampleRate*.025),ctx.sampleRate),dt=nb.getChannelData(0);for(let k=0;k<dt.length;k++)dt[k]=(rnd()*2-1)*(1-k/dt.length);
+      const ns=ctx.createBufferSource();ns.buffer=nb;const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=2800+rnd()*2500;const ng=ctx.createGain();ng.gain.value=peak*.55;
+      ns.connect(hp).connect(ng).connect(out);ns.start(t);nodes.push(ns)}
+    t+=d+gap*(rnd()<.2?2.5:1)}
+  return {nodes,end:t}}
+function voiceLine(who,txt,o){o=o||{};if(S.muted||S.voiceOff||S.duel||document.hidden||!txt||!ac)return;
+  const text=vClean(txt);if(!text)return;
+  const go=()=>{if(S.muted||S.voiceOff)return;const vol=ac.createGain();vol.gain.value=o.angry?.9:.7;vol.connect(ac.destination);
+    const r=babbleInto(ac,vol,ac.currentTime+.02,who,text,o);vSrcs=vSrcs.concat(r.nodes);vEnd=r.end;
+    setTimeout(()=>{vSrcs=vSrcs.filter(n=>!r.nodes.includes(n));const nx=vQ.shift();if(nx)nx()},Math.max(0,(r.end-ac.currentTime)*1000)+60)};
+  if(o.queue&&ac.currentTime<vEnd)vQ.push(go);else{vStop();go()}}
 /* the calm souk underneath everything: a far crowd, tea glasses, an oud. Follows Sound and its own switch */
 function ambience(){if(!ac)return;const on=!S.muted&&!S.ambOff&&!document.hidden;
   if(on&&!amb){amb={g:ac.createGain(),on:null};amb.g.gain.value=0;amb.g.connect(ac.destination);const me=amb;
@@ -760,23 +745,7 @@ function ambience(){if(!ac)return;const on=!S.muted&&!S.ambOff&&!document.hidden
   /* only a CHANGE moves the volume: re-ramping on every tap made Safari restart the fade from silence, so the background dropped out each time you merged */
   if(amb&&amb.s&&amb.on!==on){amb.on=on;const t=ac.currentTime,g=amb.g.gain;g.cancelScheduledValues(t);g.setValueAtTime(on?0.0001:AMB_VOL,t);g.linearRampToValueAtTime(on?AMB_VOL:0,t+(on?2.5:.4))}}
 document.addEventListener('visibilitychange',()=>ambience());
-function voiceLine(who,txt,o,gloss){o=o||{};if(S.muted||S.voiceOff||S.duel||document.hidden||!txt)return;
-  const t=vClean(txt);if(!t)return;
-  const cl=clipFor(who,t,gloss),f=cl&&VMAN&&VMAN[cl.voice+'|'+cl.text];if(f){playClip(f,who,o);return}  // a real recording when there is one
-  if(!VS)return;
-  const c=cOf(who),native=VLANG[c]||'en-GB';let say=t,v=null,tags;
-  for(const [lg,nt] of VTXT[t]||[]){v=vPick(lg===native.split('-')[0]?native:lg,who);if(v){say=nt;break}}   // its own script, its own voice
-  if(!v){const sc=SCRIPT.find(([re])=>re.test(t));
-    if(sc){v=vPick(native.startsWith(sc[1])?native:(sc[1]==='ar'&&c==='ir'?'fa':sc[1]),who)||(c==='ir'?vPick('ar',who):null);if(!v)return}  // never let a voice spell out a script it cannot read
-    else{if(!gloss)tags=ENACC[c]||['en-GB'];                                       // an English line, in their accent
-      else if(/^(ar|fa|zh|ja|ko|ru|hi|ur|bn)/.test(native))tags=c==='in'||c==='pk'||c==='bd'?['en-IN']:['en-GB']; // romanised, no voice of its own here
-      else tags=[native].concat(ENACC[c]||[]);                                      // a Latin-script language
-      const all=tags.concat(['en-GB','en-US']);for(const tg of all){v=vPick(tg,who,true);if(v)break}   // the exact accent first, in order
-      if(!v)for(const tg of all){v=vPick(tg,who);if(v)break}}}
-  try{if(!o.queue)VS.cancel();const u=new SpeechSynthesisUtterance(say);if(v){u.voice=v;u.lang=v.lang}
-    const f=femaleOf(who),h=seedOf(who)%5/25,vf=v&&FEM.test(v.name),vm=v&&MASC.test(v.name);
-    const base=f?(vf?1:vm?1.4:1.25):(vm?1:vf?.7:.8);                               // a woman given only a man's voice is lifted, and the other way round
-    u.pitch=Math.min(2,base+h-.08+(o.angry?.12:0));u.rate=o.angry?1.1:1;u.volume=o.angry?.3:.25;VS.speak(u)}catch(e){}}
+
 let lastSay=0,lastLine=0,fight=null,nextFight=Date.now()+45000;
 
 

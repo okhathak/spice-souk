@@ -82,3 +82,7 @@ Layout: on tall windows the stall widens instead of leaving an empty band above 
 - **A wall in the second souq:** after travelling, serving fell from 8 a minute to 1 and energy sat at zero for minutes. The sack's basic spice now rises with level (Chili from level 6, Turmeric from level 9), energy refills every 6 seconds, the energy bar grows by 3 per level, and fewer of the very hardest dishes come at once. Idle time in 30 minutes fell from ~3.7 to ~1.5 minutes.
 - **Finishing a stall didn't say what's next.** The hammer turns into a pulsing 🐪 Travel button and Jaddi tells you where to go.
 
+## Babble voices replace the recorded ones (2026-10-06)
+
+The recorded neural voices sounded robotic and calm, never angry, and muffled in the mix. Customers now speak in made-up **babble** (Animal Crossing / Sims style), synthesised live in the game with Web Audio: no files, no service, nothing to license. Each syllable is a short sawtooth voice through two vowel formants with a consonant tick; the vowels follow the real line where it is written in Latin letters. Every customer has their own pitch (women higher, each person slightly different), every nationality its own rhythm and melody (`BAB` in `index.html`), and anger is faster, higher and punchier, rising into a yell on "!". The words stay in the speech bubble. The recording workflow and its tools are removed; `voices/*.mp3` stays only as source material for `tools/make-ambience.py` (the crowd murmur in the souk background).
+
