@@ -366,6 +366,7 @@ body.rush .awning{background-size:88px 12px;animation:awnslide .8s linear infini
 body.rush .order:not(.happy){box-shadow:0 0 0 2px rgba(255,190,80,.7),0 0 16px rgba(255,170,60,.45)}
 .order.critic{box-shadow:0 0 0 2px #8e5bd0 inset,0 0 14px rgba(150,100,220,.4)}
 .vipb.critb{background:#6d3fae;color:#fff}
+.restore.travel{animation:chest 1s 3,crateGlow 2.4s 3s ease-in-out infinite}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -572,7 +573,8 @@ function personSVG(name,mood,bg){const L=lookOf(name),sk=L.sk;let back='',front=
   const lines=L.old?`<path d="M14.6 19.6 L15.6 19.9 M25.4 19.6 L24.4 19.9" stroke="#8a5a3a" stroke-width=".6"/>`:'';
   return `<svg viewBox="0 0 40 40" aria-hidden="true"><defs><pattern id="chk" width="2.4" height="2.4" patternUnits="userSpaceOnUse"><rect width="2.4" height="2.4" fill="#fbfaf6"/><rect width="1.2" height="1.2" fill="#c03a2b"/><rect x="1.2" y="1.2" width="1.2" height="1.2" fill="#c03a2b"/></pattern></defs>
    <circle cx="20" cy="20" r="20" fill="${bg||'#f0dcbc'}"/>${back}${body}<rect x="17.6" y="24" width="4.8" height="5" fill="${sk}"/><ellipse cx="20" cy="17" rx="7.4" ry="8.4" fill="${sk}"/>${lines}${cheeks}${beard}${eyes}${brows}<path d="${mouth}" stroke="#5a2414" stroke-width="1.2" fill="none" stroke-linecap="round"/>${front}${sweat}</svg>`}
-const COLS=4,ROWS=5,N=COLS*ROWS,EMAX=40,EREGEN=7000;
+const COLS=4,ROWS=5,N=COLS*ROWS,EMAX=40,EREGEN=6000;
+function eMax(){return EMAX+Math.max(0,(S.level||1)-1)*3}  // the energy bar grows with you: later souqs ask for bigger spices
 const SACK_UP=[{p:.15,cost:120},{p:.3,cost:300},{p:.45,cost:700},{p:.6,cost:null}];
 
 const $=id=>document.getElementById(id);
@@ -645,7 +647,7 @@ function newOrder(){
     const names=S.orders.concat(S.queue||[]).map(o=>o&&o.who).concat(S.away||[]),people=SOUKS[0].people.filter(p=>!names.includes(p));return {d:x.d,n:x.n.slice(),who:freeName(people,SOUKS[0].people),col:pick(FACES),fresh:true}}
   let pool=DISHES.filter(x=>x.n.every(t=>t<=mt)&&!taken.includes(x.d));
   // lean toward harder dishes as you level
-  pool.sort(()=>Math.random()-.5);if(Math.random()<.5)pool.sort((a,b)=>Math.max(...b.n)-Math.max(...a.n));
+  pool.sort(()=>Math.random()-.5);if(Math.random()<(S.level>=6?.3:.5))pool.sort((a,b)=>Math.max(...b.n)-Math.max(...a.n));
   const x=pool[Math.floor(Math.random()*Math.min(pool.length,4))]||DISHES[1];
   const names=S.orders.concat(S.queue||[]).map(o=>o&&o.who).concat(S.away||[]),people=SOUKS[soukIdx()].people.filter(p=>!names.includes(p));
   return {d:x.d,n:x.n.slice(),who:freeName(people,SOUKS[soukIdx()].people),col:pick(FACES),fresh:true};
@@ -785,12 +787,12 @@ function startFight(){if(S.duel||!S.queue||S.queue.length<2)return;const q=$('qu
   document.querySelectorAll('#fx .say').forEach(x=>x.remove());fight={a,b:a+1,A,B,start:Date.now(),lines:[c1,r1,c2,r2],said:0};renderQueue();sfx.no();buzz(30);
   setTip('<b>A fight in the line!</b><br>Tap them to calm them down.')}
 /* fighters are tracked by name: serving moves the queue up, and a line must stay over the person who said it */
-function fightSync(){if(!fight||!fight.A)return;const ia=S.queue.findIndex(o=>o&&o.who===fight.A),ib=S.queue.findIndex(o=>o&&o.who===fight.B);if(ia<0||ib<0){fight=null;nextFight=Date.now()+60000+Math.random()*40000;document.querySelectorAll('.say.line').forEach(x=>x.remove());return}fight.a=ia;fight.b=ib}
+function fightSync(){if(!fight||!fight.A)return;const ia=S.queue.findIndex(o=>o&&o.who===fight.A),ib=S.queue.findIndex(o=>o&&o.who===fight.B);if(ia<0||ib<0){fight=null;nextFight=Date.now()+120000+Math.random()*60000;document.querySelectorAll('.say.line').forEach(x=>x.remove());return}fight.a=ia;fight.b=ib}
 function fightTick(){fightSync();if(!fight)return;const qs=document.querySelectorAll('#queue .qp');
   if(fight.said<4&&Date.now()-fight.start>fight.said*2200){const who=fight.said%2?fight.b:fight.a;const L=fight.lines[fight.said];document.querySelectorAll('.say.line').forEach(x=>x.remove());speak(qs[who],L[0],'line cross q'+who,L[1]);voiceLine(fight.said%2?fight.B:fight.A,L[0],{angry:1},L[1]);lastLine=Date.now();fight.said++}
-  if(Date.now()-fight.start>11000){const A=S.queue[fight.a],B=S.queue[fight.b];S.queue.splice(fight.a,2);S.away=[A.who,B.who];setTimeout(()=>{S.away=[]},90000);fight=null;nextFight=Date.now()+60000+Math.random()*40000;fillQueue();
+  if(Date.now()-fight.start>11000){const A=S.queue[fight.a],B=S.queue[fight.b];S.queue.splice(fight.a,2);S.away=[A.who,B.who];setTimeout(()=>{S.away=[]},90000);fight=null;nextFight=Date.now()+120000+Math.random()*60000;fillQueue();
     S.orders.forEach(o=>{if(o&&o.t)o.t-=8000});sfx.no();render();setTip(`<b>${esc(A.who)} and ${esc(B.who)} stormed off.</b><br>All that shouting upset your customers.`)}}
-function calmFight(){fightSync();if(!fight)return;const qs=document.querySelectorAll('#queue .qp');const f=fight;fight=null;nextFight=Date.now()+60000+Math.random()*40000;
+function calmFight(){fightSync();if(!fight)return;const qs=document.querySelectorAll('#queue .qp');const f=fight;fight=null;nextFight=Date.now()+120000+Math.random()*60000;
   lastLine=Date.now()+5000;document.querySelectorAll('.say.line').forEach(x=>x.remove());const k1=lineFor(S.queue[f.a]?.who,'calm'),k2=lineFor(S.queue[f.b]?.who,'calm');speak(qs[f.a],k1[0],'line q'+f.a,k1[1]);voiceLine(f.A,k1[0],null,k1[1]);setTimeout(()=>{const q2=document.querySelectorAll('#queue .qp');speak(q2[f.b],k2[0],'line q'+f.b,k2[1]);voiceLine(f.B,k2[0],{queue:1},k2[1])},700);
   const bonus=15+S.level*3;flyCoins($('queue'),4,()=>{S.coins+=bonus;renderTop();save()});tone(784,.12,'triangle',.12);tone(1046,.16,'triangle',.12,.1);
   renderQueue();setTip(`<b>Peace in the souk! +${bonus} coins</b><br>A wise stall keeper keeps the line calm.`)}
@@ -906,7 +908,7 @@ function renderStall(newest){
   const n=builtN(),st=stall();let h=S.duel?'':`<div class="jsit${n>=8?' proud':''}" id="jaddi" title="Jaddi Saeed">${personSVG('Jaddi Saeed',n===0?'wait':n<8?'calm':'happy')}</div>`;
   const from=Math.max(0,n-2);if(from)h+=`<div class="deco more">+${from}</div>`;for(let i=from;i<n;i++)h+=`<div class="deco${newest===i?' new':''}" title="${esc(st.steps[i].n)}">${DECOR[i].s}</div>`;
   const nx=st.steps[n],can=nx&&S.coins>=nx.c;
-  h+=`<button class="restore${can?' can':''}" id="restoreBtn" type="button" aria-label="Restore the stall">${n<8?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 4l6 6-3 3-6-6zM11 7l-8 8 3 3 8-8"/></svg>${n}/8`:'8/8 ✓'}</button>`;
+  h+=`<button class="restore${can||(n>=8&&S.souk<STALLS.length-1)?' can':''}${n>=8&&S.souk<STALLS.length-1?' travel':''}" id="restoreBtn" type="button" aria-label="Restore the stall">${n<8?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14 4l6 6-3 3-6-6zM11 7l-8 8 3 3 8-8"/></svg>${n}/8`:S.souk<STALLS.length-1?'🐪 Travel':'8/8 ✓'}</button>`;
   $('stall').innerHTML=h;$('restoreBtn').onclick=openStall;
   if(can&&!S.duel&&S.jHint!==S.souk*10+n&&S.guide>=3){const key=S.souk*10+n;setTimeout(()=>{if(S.jHint!==key&&jaddiSay(n===0?'You have enough coins! Tap the hammer and fix my lantern.':'Enough coins for the next piece, habibi! 🔨',true))S.jHint=key},700)}
 }
@@ -929,6 +931,7 @@ function build(){const st=stall(),n=builtN(),x=st.steps[n];if(!x||S.coins<x.c)re
   S.coins-=x.c;S.built=n+1;sfx.level();goal('build');renderStall(n);render();$('stallSheet').hidden=true;
   celebrate({art:`<div style="width:96px;height:96px;margin:auto">${DECOR[n].s}</div>`,title:x.n+'!',text:`“${x.say}” — Jaddi Saeed`,
     list:[x.perk==='wait'?'Customers will wait 15 seconds longer':'Customers tip 5% more',`${n+1} of 8 restored`],btn:n+1>=8?'See the stall':'Keep selling'});
+  if(n+1>=8&&S.souk<STALLS.length-1){const from=S.souk,to=SOUKS[from+1].n.replace(/^The /,'the ');setTimeout(()=>{if(S.souk===from&&!S.duel)jaddiSay(`Ya wildi, ${to} is waiting for us! Tap 🐪 Travel.`,true)},6000)}
   if(n+1>=8){const END=[['Jaddi is back at his stall!','For the first time in years, Jaddi stands behind his counter in the souq. “It smells just like the day I opened it. Our name is back in the souk.”'],
       ['Jaddi visits the medina!','Jaddi travels to the medina and his old friend Youssef runs to hug him. “Two stalls, two cities, one family.”'],
       ['Jaddi’s dream came true','Three souqs, one family. Jaddi hands you his old brass key. “The caravan road is ours again. The stall is yours now, my child.”']][S.souk]||[];
@@ -980,11 +983,11 @@ function sack(){
   audio();idleReset();
   if(S.duel){const empty=S.cells.map((v,i)=>v==null?i:-1).filter(i=>i>=0);if(!empty.length){sfx.no();shake();setTip('Tray full. Merge or serve.');return}
     const i=pick(empty),t=S.srng()<.3?1:0;S.cells[i]=t;sfx.drop();render();mark(i,'drop');return}
-  if(S.energy<=0){sfx.no();toast('<b>Out of energy</b>It refills by itself, 1 every 7 seconds. Or take a tea break in the Shop.');return}
+  if(S.energy<=0){sfx.no();toast('<b>Out of energy</b>It refills by itself, 1 every 6 seconds. Or take a tea break in the Shop.');return}
   const empty=S.cells.map((v,i)=>v==null?i:-1).filter(i=>i>=0);
   if(!empty.length){sfx.no();shake();setTip('Your tray is full. Merge or serve to make room.');return}
-  const i=pick(empty);const r=Math.random();const t=S.level>=4&&r<.08?2:r<SACK_UP[S.sackLv].p?1:0;
-  if(S.energy===EMAX)S.eAt=Date.now();
+  const i=pick(empty);const r=Math.random(),base=S.level>=9?2:S.level>=6?1:0;const t=Math.min(MAX-1,base+(S.level>=4&&r<.1?2:r<SACK_UP[S.sackLv].p?1:0));
+  if(S.energy>=eMax())S.eAt=Date.now();
   S.energy--;S.cells[i]=t;if(S.guide===0)S.guide=1;sfx.drop();render();mark(i,'drop');
   setTip(`You got <b>${SPICES[t].n}</b>. Find another to merge.`);
 }
@@ -1045,7 +1048,7 @@ function serve(k,el){
   const taken=[];
   o.n.forEach((t,j)=>{const i=S.cells.findIndex((v,x)=>v===t&&!taken.includes(x));taken.push(i);const ce=cellEl(i);flyPot(ce,el,t,j*90);burst(ce,SPICES[t].c,8)});
   taken.forEach(i=>S.cells[i]=null);
-  const now=Date.now();S.combo=(now-(S.lastServe||0)<15000)?(S.combo||1)+1:1;if(!S.duel){if(!S.jFirst){S.jFirst=1;setTimeout(()=>jaddiSay('That’s how I did it in 1962! 👏',true),1600)}else if(S.combo===3)setTimeout(()=>jaddiSay('Ya salam! Just like the old days!'),1400)}S.lastServe=now;S.served=(S.served||0)+1;if(!S.duel&&S.served%CRATE_EVERY===0)crateArrives();
+  const now=Date.now();S.combo=(now-(S.lastServe||0)<15000)?(S.combo||1)+1:1;if(!S.duel){if(!S.jFirst){S.jFirst=1;setTimeout(()=>jaddiSay('That’s how I did it in 1962! 👏',true),1600)}else if(S.combo===3)setTimeout(()=>jaddiSay('Ya salam! Just like the old days!'),1400)}S.lastServe=now;S.served=(S.served||0)+1;if(!S.duel&&S.served%CRATE_EVERY===0&&!(S.crates>0)&&Date.now()-(S.crateAt||0)>CRATE_GAP)crateArrives();
   const mood=moodOf(o),tipR=mood==='calm'?.25+perkTip():mood==='wait'?perkTip():-.25;
   const base=Math.round(o.n.reduce((s,t)=>s+(t+1)*(t+1)*3,5)*(o.vip?2:1)),bonus=S.combo>1?Math.round(base*.25*(S.combo-1)):0,tipAmt=Math.round((base+bonus)*tipR),stars=o.critic?criticStars(o):0,pay=Math.round(Math.max(1,base+bonus+tipAmt)*(stars?1+stars*.4:1)*(rush&&!S.duel?2:1)),xp=o.n.reduce((s,t)=>s+t+2,0);
   sfx.serve();buzz(25);el.classList.add('happy');o.happy=true;{const sb=el.querySelector('.serve');if(sb){sb.disabled=true;sb.textContent='Served ✓'}}el.querySelector('.face').innerHTML=personSVG(o.who,'happy')+'<span class="mood">❤️</span>';el.dataset.mood='happy';
@@ -1065,7 +1068,7 @@ function serve(k,el){
   setTip(S.combo>1?`Combo! Serve again within 15 seconds to keep it going.`:`${o.who} loved the ${o.d}. ${S.served} customers served.`);
 }
 function levelCheck(){
-  while(S.xp>=xpNeed()){S.xp-=xpNeed();const before=soukIdx();S.level++;S.energy=Math.max(S.energy,EMAX);sfx.level();
+  while(S.xp>=xpNeed()){S.xp-=xpNeed();const before=soukIdx();S.level++;S.energy=Math.max(S.energy,eMax());sfx.level();
     const list=['<span class="bolt"></span>Energy refilled'];
     if(S.level+2<=MAX)list.push(`${jarHTML(maxTier(),true)}Customers now ask for ${SPICES[maxTier()].n}`);
     celebrate({art:`<div style="width:90px;height:100px;margin:auto">${jarHTML(maxTier())}</div>`,title:`Level ${S.level}!`,text:'Word is spreading about your stall.',list});
@@ -1075,8 +1078,8 @@ function levelCheck(){
 /* ---------- energy ---------- */
 function tick(){
   if(S.duel)return;
-  if(S.energy<EMAX){const gained=Math.floor((Date.now()-S.eAt)/EREGEN);if(gained>0){S.energy=Math.min(EMAX,S.energy+gained);S.eAt+=gained*EREGEN;renderTop();save()}
-    const left=Math.ceil((EREGEN-(Date.now()-S.eAt))/1000);$('etimer').textContent=S.energy<EMAX?` ${left}s`:''}else $('etimer').textContent='';
+  if(S.energy<eMax()){const gained=Math.floor((Date.now()-S.eAt)/EREGEN);if(gained>0){S.energy=Math.min(eMax(),S.energy+gained);S.eAt+=gained*EREGEN;renderTop();save()}
+    const left=Math.ceil((EREGEN-(Date.now()-S.eAt))/1000);$('etimer').textContent=S.energy<eMax()?` ${left}s`:''}else $('etimer').textContent='';
 }
 setInterval(()=>{tick();walkouts();updateMoods();chatter();trackPlay();rushTick()},1000);tick();
 
@@ -1119,7 +1122,7 @@ function nextKeep(){return KEEPS[(S.keeps||[]).length%KEEPS.length]}
 function stampCard(){const n=S.stamps||0,k=nextKeep();
   return `<div class="stampc"><div class="sch"><b>Jaddi’s stamp card</b><span>${n} of ${STAMPS} · next: ${k.e} ${k.n}</span></div><div class="srow">${Array.from({length:STAMPS},(_,i)=>`<i class="${i<n?'on':''}${i===STAMPS-1?' gift':''}">${i<n?'🌶️':i===STAMPS-1?k.e:''}</i>`).join('')}</div></div>`}
 function goals(){if(S.duel)return null;if(!S.dg||S.dg.day!==today()){
-    const L=S.level,pool=[{k:'serve',goal:6+L},{k:'happy',goal:3},{k:'earn',goal:120+L*30},{k:'combo',goal:3},{k:'make',goal:Math.min(maxTier(),2+(L>2?1:0))}];
+    const L=S.level,pool=[{k:'serve',goal:12+L*3},{k:'happy',goal:5+L},{k:'earn',goal:400+L*150},{k:'combo',goal:L>=3?4:3},{k:'make',goal:Math.min(maxTier(),2+(L>2?1:0))}];
     if(builtN()<8)pool.push({k:'build',goal:1});pool.sort(()=>Math.random()-.5);
     const yest=new Date(Date.now()-864e5).toISOString().slice(0,10);if(S.dg&&S.dg.claimed!==yest&&S.dg.claimed!==today())S.streak=0;
     S.dg={day:today(),list:pool.slice(0,3).map(g=>({...g,p:0})),claimed:S.dg&&S.dg.claimed||''}}
@@ -1142,7 +1145,7 @@ $('glClaim').onclick=()=>{const g=goals();if(!g||g.claimed===today()||!g.list.ev
   if(full){S.stamps=0;S.keeps=(S.keeps||[]).concat(KEEPS.indexOf(k));S.coins+=300;save();render();
     celebrate({art:`<div style="font-size:80px;line-height:1">${k.e}</div>`,title:`Jaddi gives you his ${k.n}`,text:`“${k.say}”`,list:['<span class="coin"></span>+300 coins','It’s kept in Jaddi’s memories.','A new stamp card starts tomorrow.'],btn:'Shukran, Jaddi!'})}
   save()};
-function daily(){if(S.guide!=null&&S.guide<3)return;if(S.daily!==today()&&S.intro){S.daily=today();S.coins+=40;S.energy=Math.min(EMAX+10,S.energy+10);save();setTimeout(()=>toast('<b>Daily gift</b>+40 coins and +10 energy. Come back tomorrow for more.',3500),600);
+function daily(){if(S.guide!=null&&S.guide<3)return;if(S.daily!==today()&&S.intro){S.daily=today();S.coins+=40;S.energy=Math.min(eMax()+10,S.energy+10);save();setTimeout(()=>toast('<b>Daily gift</b>+40 coins and +10 energy. Come back tomorrow for more.',3500),600);
     if((S.days||[]).length>1){const left=STAMPS-(S.stamps||0),k=nextKeep();setTimeout(()=>jaddiSay(left===1?`Welcome back, ya wildi! Finish today’s jobs and my ${k.n} is yours.`:`Welcome back, ya wildi! ${left} more days of jobs and my ${k.n} is yours.`,true),4800)}}}
 
 /* ---------- drag + tap on board ---------- */
@@ -1533,10 +1536,10 @@ room=peerRoom;
   if(!S.nick){const u=await window.claude.use('user');if(u){const me=await u.me();if(me&&me.name){S.nick=me.name.split(' ')[0].slice(0,20);save()}}}}}catch(e){room=null}
   if(!$('duelSheet').hidden)renderDuelSheet()})();
 /* ---------- restock crate: a sorting rush every few orders ---------- */
-const CRATE_EVERY=4,CRATE_MS=20000,CRATE_N=12;
+const CRATE_EVERY=10,CRATE_GAP=180000,CRATE_MS=20000,CRATE_N=12;
 let cg=null;
 function renderCrateBtn(){const b=$('crateBtn');if(!b)return;b.hidden=!(S.crates>0)||!!S.duel}
-function crateArrives(){if(S.duel)return;S.crates=1;save();renderCrateBtn();setTimeout(()=>{toast('<b>A spice crate arrived!</b>Tap the crate to sort it for bonus coins.',3200);tone(523,.12,'triangle',.12);tone(784,.18,'triangle',.12,.1)},1300)}
+function crateArrives(){if(S.duel)return;S.crates=1;S.crateAt=Date.now();save();renderCrateBtn();setTimeout(()=>{toast('<b>A spice crate arrived!</b>Tap the crate to sort it for bonus coins.',3200);tone(523,.12,'triangle',.12);tone(784,.18,'triangle',.12,.1)},1300)}
 function crateShelves(){ // the 4 highest spices you have found, never two that look alike
   const f=[...S.found].sort((a,b)=>a-b);const pick=f.slice(-4);while(pick.length<4){const n=[0,1,2,3,4].find(t=>!pick.includes(t));pick.unshift(n)}return pick.sort((a,b)=>a-b)}
 function openCrate(){try{audio()}catch(e){}if(!(S.crates>0)){renderCrateBtn();return}

@@ -72,3 +72,13 @@ Layout: on tall windows the stall widens instead of leaving an empty band above 
 
 **The food critic:** every few minutes a customer may arrive as a critic (purple card, 📝 badge). Their review depends only on speed: served within 14 seconds is five stars, then four, three and two; walking out is one star. Pay grows with the stars (up to ×3).
 
+## Pacing, measured by a robot player (added 2026-10-06)
+
+`tools/playtest.cjs` plays a fresh game on a fast-forwarded clock like a reasonable person (one action every 1.2 seconds: serve, merge, get spice, build, claim, sort crates, calm fights, travel) and logs coins, level, serves, walkouts, events and every moment with nothing to do. What it found, and what changed:
+
+- **Crates were 38% of all play time** (one every 4 customers, 23 in 15 minutes). Now: every 10 customers and at least 3 minutes apart, never stacked: 4 in 15 minutes.
+- **Daily goals finished in the first minute.** Now sized to a real session (serve 12 + 3 per level, earn 400 + 150 per level, and so on).
+- **Line fights every ~80 seconds.** Now every 2 to 3 minutes.
+- **A wall in the second souq:** after travelling, serving fell from 8 a minute to 1 and energy sat at zero for minutes. The sack's basic spice now rises with level (Chili from level 6, Turmeric from level 9), energy refills every 6 seconds, the energy bar grows by 3 per level, and fewer of the very hardest dishes come at once. Idle time in 30 minutes fell from ~3.7 to ~1.5 minutes.
+- **Finishing a stall didn't say what's next.** The hammer turns into a pulsing 🐪 Travel button and Jaddi tells you where to go.
+
