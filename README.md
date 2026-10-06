@@ -60,3 +60,9 @@ A calm market plays underneath the game: a far crowd murmur (built from the game
 
 How it stays safe and simple: phones talk directly over the same PeerJS link the duel uses, with no server and no account. A friend's code is their link address, so nobody can pretend to be someone else's code while that person is online. Only fixed words travel: a poke or a title is a number into a fixed list, never free text; a name is checked, escaped and capped at 20 characters. Pokes are limited to one every 20 seconds per friend, the list holds at most 40, and the list lives only on the phone (`localStorage`, key `spicesouk-friends`). Limits: the green dot and pokes only work while both games are open, and a new phone starts with an empty list.
 
+## Jaddi's stamp card and a roomier tray (added 2026-10-06)
+
+Each day you finish your three daily goals, Jaddi stamps his card (in the 📜 goals sheet). Seven stamps and he gives you one of his keepsakes (a brass spice scale, a copper spice jar, the old souq lamp, his radio, a carved wooden camel, a saffron basket) with a memory and +300 coins; they are kept at the top of *Jaddi's memories*. A missed day never wipes the card; only the streak is strict. On a new day Jaddi welcomes you back and says how close the next keepsake is.
+
+Layout: on tall windows the stall widens instead of leaving an empty band above the tray, and on short phones (iPhone SE size) the order cards and tip row tighten so the tray's cells grow from 35px to 43px.
+

@@ -27,7 +27,7 @@ body[data-souk="2"]{--wall1:#10284a;--wall2:#1f6f8b;--tray:#0b1b33}
 html,body{height:100%}
 *{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:#1a0c05;color:var(--cream);font-family:var(--body);overflow:hidden;user-select:none;-webkit-user-select:none}
-.app{position:relative;max-width:440px;height:100%;margin:0 auto;display:flex;flex-direction:column;background:linear-gradient(var(--wall1),var(--wall2));transition:background .8s;overflow:hidden}
+.app{position:relative;max-width:clamp(440px,48vh,620px);height:100%;margin:0 auto;display:flex;flex-direction:column;background:linear-gradient(var(--wall1),var(--wall2));transition:background .8s;overflow:hidden}
 button{font-family:var(--display);cursor:pointer;border:0;color:inherit}
 button:focus-visible{outline:3px solid #fff;outline-offset:2px}
 
@@ -297,12 +297,15 @@ body.duel #crateBtn{display:none}
 .cg-box{width:170px;height:34px;margin-top:-22px;border-radius:6px;background:repeating-linear-gradient(90deg,#b77a3e 0 26px,#9a6230 26px 30px);box-shadow:0 4px 0 #5a3414}
 .cg-crate small{color:var(--muted);font-size:13px;margin-top:4px}
 .cg-msg{text-align:center;font-family:var(--display);font-weight:600;font-size:17px;min-height:26px;color:#ffe28a}
+@media (max-height:700px){.tiprow .chest{height:44px;min-height:44px;padding-top:0;padding-bottom:0;gap:0}.tiprow .chest svg{width:22px;height:16px}.tiprow .chest>span{font-size:20px!important}.lane{padding-top:2px;min-height:32px}.qp{width:26px;height:26px}.jsit,.jsit svg{width:28px;height:28px}.tip{font-size:12px;line-height:1.25}}
 @media (max-height:700px){.cg-next{width:84px;height:84px}.cg-shelves{grid-auto-rows:minmax(92px,130px)}.cg-pot{width:34px;height:34px}}
 @media (max-height:740px){
  .top{padding-top:calc(6px + env(safe-area-inset-top,0px));padding-bottom:2px}
  .stall{min-height:22px;padding-top:3px}.stall span{display:none}.stall .deco,.stall .deco svg{width:20px;height:20px}
  .orders{padding-top:6px}.tiprow{min-height:44px;padding:3px 12px}.chest{min-height:40px;width:62px}.chest svg{width:26px;height:20px}
  .bar{padding-top:6px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}.sack,.icon{min-height:50px}.serve{min-height:42px}
+ .need{min-height:28px}.needs{min-height:calc(3*28px + 2*3px)}.need .mini{width:24px;height:24px}.order{padding:5px 5px 5px;gap:3px}.orders{gap:6px;padding-bottom:2px}
+ .board{gap:4px;padding:6px}.lane{min-height:0}.tiprow{min-height:44px;padding:2px 12px}
 }
 @media (max-height:600px){
  .awning,.lane,.oname,.wants,.face{display:none}
@@ -347,6 +350,14 @@ body.duel #crateBtn{display:none}
 .fl .jd svg{width:52px;height:52px;flex:none;border-radius:50%}
 #duelBtn{position:relative}#duelBtn.fr-on::after{content:'';position:absolute;top:6px;right:8px;width:11px;height:11px;border-radius:50%;background:#58b847;box-shadow:0 0 0 2px #3a1c0e}
 .frbtn{width:100%;min-height:48px;margin:0 0 10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.stampc{background:#f6e2bd;border-radius:16px;padding:10px 12px;margin:6px 0 10px}
+.stampc .sch{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.stampc .sch b{font-family:var(--display);font-size:15px;color:#4a2412}.stampc .sch span{font-size:13px;font-weight:700;color:#7a4c2a}
+.stampc .srow{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.stampc i{aspect-ratio:1;border-radius:50%;border:2px dashed #c9a777;display:grid;place-items:center;font-style:normal;font-size:16px;background:#fff7e8}
+.stampc i.on{border:2px solid #c0392b;background:#ffe2c2;animation:stampin .35s}
+@keyframes stampin{0%{transform:scale(1.6) rotate(-12deg);opacity:0}100%{transform:none;opacity:1}}.stampc i.gift{border-color:#e0a21b;background:#fff1c9;font-size:18px}
+.keeps{margin-bottom:12px}.keeps>b{display:block;font-family:var(--display);font-size:15px;color:#4a2412;margin:2px 0 6px}.mi.ke{font-size:26px;display:grid;place-items:center}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -457,6 +468,7 @@ body.duel #crateBtn{display:none}
   <div class="sheet" id="goalSheet" hidden><div class="card">
     <h2>Today’s goals</h2>
     <p class="dnote" id="glStreak"></p>
+    <div id="glStamps"></div>
     <div class="gllist" id="glList"></div>
     <button class="btn warm dfull" id="glClaim" type="button">Collect your gift</button>
     <button class="btn" type="button" data-close style="width:100%;margin-top:8px">Close</button>
@@ -892,7 +904,8 @@ function renderStall(newest){
 function openStall(){audio();renderStallSheet();openSheet('stallSheet')}
 function memories(){const out=[];STALLS.forEach((st,si)=>st.steps.forEach((x,i)=>out.push({si,i,x,open:si<S.souk||(si===S.souk&&i<builtN())})));return out}
 function openMem(){const m=memories(),n=m.filter(x=>x.open).length;$('memCount').textContent=`${n} of ${m.length} memories. Restore more of the stall to unlock the rest.`;
-  $('memList').innerHTML=m.map(x=>x.open?`<div class="mem"><span class="mi">${DECOR[x.i].s}</span><div><b>${esc(STALLS[x.si].name)} · ${esc(x.x.n)}</b><p>“${esc(x.x.say)}”</p></div></div>`:`<div class="mem locked"><span class="mi">🔒</span><div><b>${esc(STALLS[x.si].name)}</b><p>Restore “${esc(x.x.n)}” to unlock</p></div></div>`).join('');
+  const ks=(S.keeps||[]).map(i=>KEEPS[i]).filter(Boolean);
+  $('memList').innerHTML=(ks.length?`<div class="keeps"><b>Jaddi’s keepsakes · ${ks.length}</b>${ks.map(k=>`<div class="mem"><span class="mi ke">${k.e}</span><div><b>${esc(k.n)}</b><p>“${esc(k.say)}”</p></div></div>`).join('')}</div>`:`<div class="keeps"><b>Jaddi’s keepsakes</b><p class="dnote">Fill his stamp card (finish your daily goals 7 times) to earn the first one: ${nextKeep().e} ${nextKeep().n}.</p></div>`)+m.map(x=>x.open?`<div class="mem"><span class="mi">${DECOR[x.i].s}</span><div><b>${esc(STALLS[x.si].name)} · ${esc(x.x.n)}</b><p>“${esc(x.x.say)}”</p></div></div>`:`<div class="mem locked"><span class="mi">🔒</span><div><b>${esc(STALLS[x.si].name)}</b><p>Restore “${esc(x.x.n)}” to unlock</p></div></div>`).join('');
   $('stallSheet').hidden=true;openSheet('memSheet')}
 function renderStallSheet(){const st=stall(),n=builtN(),nx=st.steps[n];
   $('stTitle').textContent=st.name;$('stBar').style.width=(n/8*100)+'%';$('stCount').textContent=`${n} of 8 restored`;
@@ -1063,6 +1076,18 @@ $('fbSend').onclick=async()=>{if(!fb.fun)return;const m=fbBody();S.nick=m.name==
   $('fbCopy').onclick=async()=>{try{await navigator.clipboard.writeText(m.subject+'\n\n'+m.body);$('fbMsg').textContent='Copied. Paste it in a message to Nasser or email '+FB_TO+'.'}catch(e){$('fbMsg').textContent='Please email '+FB_TO}}};
 $('fbOpen1').onclick=openFb;$('memBtn').onclick=openMem;$('introFace').innerHTML=personSVG('Jaddi Saeed','wait');$('fbOpen2').onclick=openFb;
 const GOALS={serve:n=>`Serve ${n} customers`,happy:n=>`Serve ${n} customers while they smile`,earn:n=>`Earn ${n} coins`,combo:n=>`Get a ${n}× combo`,make:t=>`Make a ${SPICES[t].n}`,build:()=>'Restore one part of the stall'};
+/* Jaddi's stamp card: every day you finish your three goals earns a stamp. Seven stamps and Jaddi hands you one of his keepsakes.
+   A missed day never wipes the card (the streak is the strict one); the card only ever moves forward. */
+const STAMPS=7,KEEPS=[
+ {e:'⚖️',n:'Brass spice scale',say:'I weighed my first saffron on this. My hands shook, ya wildi.'},
+ {e:'🏺',n:'Copper spice jar',say:'Your grandmother filled it with cardamom every Thursday.'},
+ {e:'🪔',n:'The old souq lamp',say:'Before the electric lights, this lamp kept the whole lane open after dark.'},
+ {e:'📻',n:'Jaddi’s radio',say:'Every morning, the news and a song before the first customer.'},
+ {e:'🐪',n:'Carved wooden camel',say:'A trader gave it to me for a sack of cumin. Best deal I ever made.'},
+ {e:'🧺',n:'Saffron basket',say:'Only the best threads went in here. Smell it, it still remembers.'}];
+function nextKeep(){return KEEPS[(S.keeps||[]).length%KEEPS.length]}
+function stampCard(){const n=S.stamps||0,k=nextKeep();
+  return `<div class="stampc"><div class="sch"><b>Jaddi’s stamp card</b><span>${n} of ${STAMPS} · next: ${k.e} ${k.n}</span></div><div class="srow">${Array.from({length:STAMPS},(_,i)=>`<i class="${i<n?'on':''}${i===STAMPS-1?' gift':''}">${i<n?'🌶️':i===STAMPS-1?k.e:''}</i>`).join('')}</div></div>`}
 function goals(){if(S.duel)return null;if(!S.dg||S.dg.day!==today()){
     const L=S.level,pool=[{k:'serve',goal:6+L},{k:'happy',goal:3},{k:'earn',goal:120+L*30},{k:'combo',goal:3},{k:'make',goal:Math.min(maxTier(),2+(L>2?1:0))}];
     if(builtN()<8)pool.push({k:'build',goal:1});pool.sort(()=>Math.random()-.5);
@@ -1079,11 +1104,16 @@ function renderGoalBtn(){const b=$('goalBtn');if(!b)return;const g=goals();b.hid
 function openGoals(){audio();const g=goals();if(!g)return;
   $('glList').innerHTML=g.list.map(x=>`<div class="glrow${x.p>=x.goal?' done':''}"><div><b>${GOALS[x.k](x.goal)}</b><div class="xpbar"><i style="width:${Math.min(100,x.p/x.goal*100)}%"></i></div></div><span>${x.k==='make'?(x.p>=x.goal?'✓':''):Math.min(x.p,x.goal)+'/'+x.goal}</span></div>`).join('');
   const all=g.list.every(x=>x.p>=x.goal),got=g.claimed===today();const c=$('glClaim');c.disabled=!all||got;c.textContent=got?'Collected. New goals tomorrow':all?'Collect your gift':'Finish all three for a gift';
-  $('glStreak').textContent=S.streak?`🔥 ${S.streak} day streak`:'Finish today’s goals to start a streak';openSheet('goalSheet')}
+  $('glStreak').textContent=S.streak?`🔥 ${S.streak} day streak`:'Finish today’s goals to start a streak';$('glStamps').innerHTML=stampCard();openSheet('goalSheet')}
 $('glClaim').onclick=()=>{const g=goals();if(!g||g.claimed===today()||!g.list.every(x=>x.p>=x.goal))return;g.claimed=today();S.streak=(S.streak||0)+1;
   const coins=80+Math.min(7,S.streak)*20;S.coins+=coins;S.energy+=10;$('goalSheet').hidden=true;render();renderGoalBtn();
-  celebrate({art:'<div style="font-size:72px;line-height:1">📜</div>',title:'Daily goals done!',text:S.streak>1?`${S.streak} days in a row. Your gift grows with your streak.`:'Come back tomorrow for three new goals.',list:[`<span class="coin"></span>+${coins} coins`,'<span class="bolt"></span>+10 energy',`🔥 ${S.streak} day streak`]})};
-function daily(){if(S.guide!=null&&S.guide<3)return;if(S.daily!==today()&&S.intro){S.daily=today();S.coins+=40;S.energy=Math.min(EMAX+10,S.energy+10);save();setTimeout(()=>toast('<b>Daily gift</b>+40 coins and +10 energy. Come back tomorrow for more.',3500),600)}}
+  S.stamps=(S.stamps||0)+1;const full=S.stamps>=STAMPS,k=nextKeep();
+  celebrate({art:'<div style="font-size:72px;line-height:1">📜</div>',title:'Daily goals done!',text:full?'That’s your seventh stamp. Jaddi has something for you…':S.streak>1?`${S.streak} days in a row. Your gift grows with your streak.`:'Come back tomorrow for three new goals.',list:[`<span class="coin"></span>+${coins} coins`,'<span class="bolt"></span>+10 energy',`🌶️ Stamp ${Math.min(S.stamps,STAMPS)} of ${STAMPS} on Jaddi’s card`,`🔥 ${S.streak} day streak`]});
+  if(full){S.stamps=0;S.keeps=(S.keeps||[]).concat(KEEPS.indexOf(k));S.coins+=300;save();render();
+    celebrate({art:`<div style="font-size:80px;line-height:1">${k.e}</div>`,title:`Jaddi gives you his ${k.n}`,text:`“${k.say}”`,list:['<span class="coin"></span>+300 coins','It’s kept in Jaddi’s memories.','A new stamp card starts tomorrow.'],btn:'Shukran, Jaddi!'})}
+  save()};
+function daily(){if(S.guide!=null&&S.guide<3)return;if(S.daily!==today()&&S.intro){S.daily=today();S.coins+=40;S.energy=Math.min(EMAX+10,S.energy+10);save();setTimeout(()=>toast('<b>Daily gift</b>+40 coins and +10 energy. Come back tomorrow for more.',3500),600);
+    if((S.days||[]).length>1){const left=STAMPS-(S.stamps||0),k=nextKeep();setTimeout(()=>jaddiSay(left===1?`Welcome back, ya wildi! Finish today’s jobs and my ${k.n} is yours.`:`Welcome back, ya wildi! ${left} more days of jobs and my ${k.n} is yours.`,true),4800)}}}
 
 /* ---------- drag + tap on board ---------- */
 let drag=null;
