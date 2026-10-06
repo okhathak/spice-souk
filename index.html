@@ -266,7 +266,8 @@ body.locked .board{filter:saturate(.6) brightness(.85)}
 .rank{display:flex;align-items:center;gap:10px;width:100%;text-align:left}
 .rank .medal{width:28px;font-size:20px;text-align:center}
 .rank b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.chest.crate{background:linear-gradient(#ffd66b,#f0a52a);color:#4a2412;animation:chest 1s infinite}
+.chest.crate{background:linear-gradient(#ffd66b,#f0a52a);color:#4a2412;animation:chest 1s 3,crateGlow 2.4s 3s ease-in-out infinite}
+@keyframes crateGlow{0%,100%{box-shadow:0 0 0 0 rgba(255,210,100,0)}50%{box-shadow:0 0 0 4px rgba(255,210,100,.45)}}
 .chest.crate small{color:#4a2412}
 body.duel #crateBtn{display:none}
 .ci-shelves{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:4px 0 8px}
@@ -343,7 +344,7 @@ body.duel #crateBtn{display:none}
   <div class="lane"><div class="queue" id="queue" aria-label="Customers waiting in line"></div><div class="stall" id="stall" aria-label="Your stall decorations"></div></div>
   <div class="duelhud" id="duelHud" aria-live="polite"></div>
   <div class="orders" id="orders"></div>
-  <div class="tiprow"><button class="chest" id="chest" type="button" aria-label="Souk chest"><svg viewBox="0 0 32 28"><rect x="3" y="11" width="26" height="15" rx="2" fill="#8a4a1c" stroke="#3f1d0c" stroke-width="1.5"/><path d="M3 12 Q16 0 29 12Z" fill="#a85a22" stroke="#3f1d0c" stroke-width="1.5"/><rect x="3" y="15" width="26" height="3" fill="#e9b85a"/><rect x="14" y="13" width="4" height="7" rx="1" fill="#f4c04e" stroke="#7a4c10"/></svg><div class="meter"><i id="chestFill"></i></div><small id="chestTxt">0/8</small></button><button class="chest crate" id="crateBtn" type="button" aria-label="Spice crate, tap to sort it" hidden><span style="font-size:26px;line-height:1">📦</span><small>Sort!</small></button><button class="chest goal" id="goalBtn" type="button" aria-label="Daily goals" hidden><span style="font-size:22px;line-height:1">📜</span><small id="goalTxt">0/3</small></button><div class="tip" id="tip">Tap <b>Get spice</b> to start.</div></div>
+  <div class="tiprow"><button class="chest" id="chest" type="button" aria-label="Souk chest"><svg viewBox="0 0 32 28"><rect x="3" y="11" width="26" height="15" rx="2" fill="#8a4a1c" stroke="#3f1d0c" stroke-width="1.5"/><path d="M3 12 Q16 0 29 12Z" fill="#a85a22" stroke="#3f1d0c" stroke-width="1.5"/><rect x="3" y="15" width="26" height="3" fill="#e9b85a"/><rect x="14" y="13" width="4" height="7" rx="1" fill="#f4c04e" stroke="#7a4c10"/></svg><div class="meter"><i id="chestFill"></i></div><small id="chestTxt">0/8</small></button><button class="chest crate" id="crateBtn" type="button" aria-label="Spice crate: sort it for bonus coins" hidden><span style="font-size:26px;line-height:1">📦</span><small>Crate</small></button><button class="chest goal" id="goalBtn" type="button" aria-label="Daily goals" hidden><span style="font-size:22px;line-height:1">📜</span><small id="goalTxt">0/3</small></button><div class="tip" id="tip">Tap <b>Get spice</b> to start.</div></div>
   <div class="boardwrap"><div class="board" id="board" aria-label="Spice tray"></div></div>
   <div class="bar">
     <button class="icon" id="bookBtn" type="button" aria-label="Spice book"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>Book</button>
@@ -540,7 +541,7 @@ if(!S.cells.some(v=>v!=null)){[0,0,0,1,0,2].forEach((t,k)=>S.cells[[5,6,9,10,13,
 
 /* ---------- sound ---------- */
 let ac=null;
-function audio(){vUnlock();if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(ac&&ac.state==='suspended')ac.resume();ambience()}
+function audio(){try{vUnlock()}catch(e){}if(!ac){try{ac=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(ac&&ac.state!=='running'){try{ac.resume()}catch(e){}}ambience()}
 function tone(f,d=.12,type='sine',g=.18,delay=0,slide=0){if(S.muted||!ac)return;const t=ac.currentTime+delay,o=ac.createOscillator(),v=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(f*slide,t+d);v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+.01);v.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(v).connect(ac.destination);o.start(t);o.stop(t+d+.02)}
 const SCALE=[392,440,523,587,659,784,880,1047,1175,1319];
 const sfx={
@@ -705,9 +706,10 @@ function playClip(file,who,o){if(!ac)return;if(!o.queue)vStop();const g=vGen;
     if(o.queue&&vSrc)vQ.push(go);else go()}).catch(()=>{})}
 /* the calm souk underneath everything: a far crowd, tea glasses, an oud. Follows Sound and its own switch */
 function ambience(){if(!ac)return;const on=!S.muted&&!S.ambOff&&!document.hidden;
-  if(on&&!amb){amb={g:ac.createGain()};amb.g.gain.value=0;amb.g.connect(ac.destination);const me=amb;
-    vLoadBuf('sounds/souk.mp3').then(buf=>{if(amb!==me)return;const src=ac.createBufferSource();src.buffer=buf;src.loop=true;src.loopStart=.08;src.loopEnd=buf.duration-.08;src.connect(me.g);src.start(0,.08);me.s=src;ambience()}).catch(()=>{if(amb===me)amb=null})}
-  if(amb){const t=ac.currentTime;amb.g.gain.cancelScheduledValues(t);amb.g.gain.setValueAtTime(amb.g.gain.value,t);amb.g.gain.linearRampToValueAtTime(on&&amb.s?AMB_VOL:0,t+(on?2.5:.4))}}
+  if(on&&!amb){amb={g:ac.createGain(),on:null};amb.g.gain.value=0;amb.g.connect(ac.destination);const me=amb;
+    vLoadBuf('sounds/souk.mp3').then(buf=>{if(amb!==me)return;const src=ac.createBufferSource();src.buffer=buf;src.loop=true;src.loopStart=.08;src.loopEnd=buf.duration-.08;src.connect(me.g);src.start(0,.08);me.s=src;me.on=null;ambience()}).catch(()=>{if(amb===me)amb=null})}
+  /* only a CHANGE moves the volume: re-ramping on every tap made Safari restart the fade from silence, so the background dropped out each time you merged */
+  if(amb&&amb.s&&amb.on!==on){amb.on=on;const t=ac.currentTime,g=amb.g.gain;g.cancelScheduledValues(t);g.setValueAtTime(on?0.0001:AMB_VOL,t);g.linearRampToValueAtTime(on?AMB_VOL:0,t+(on?2.5:.4))}}
 document.addEventListener('visibilitychange',()=>ambience());
 function voiceLine(who,txt,o,gloss){o=o||{};if(S.muted||S.voiceOff||S.duel||document.hidden||!txt)return;
   const t=vClean(txt);if(!t)return;
@@ -1077,9 +1079,9 @@ $('sack').onclick=sack;
 $('infoBtn').onclick=()=>{if(S.duel)return;S.guide=0;$('intro').hidden=false;guide()};
 $('startBtn').onclick=()=>{audio();S.intro=true;$('intro').hidden=true;sfx.level();daily();save();idleReset();guide()};
 if(S.intro){$('intro').hidden=true;daily()}
-function openSheet(id){audio();sfx.pick();$(id).hidden=false}
+function openSheet(id){$(id).hidden=false;try{audio();sfx.pick()}catch(e){}}
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{b.closest('.sheet').hidden=true});
-document.querySelectorAll('.sheet').forEach(s=>s.addEventListener('click',e=>{if(e.target===s&&s.id!=='intro')s.hidden=true}));
+document.querySelectorAll('.sheet').forEach(s=>s.addEventListener('click',e=>{if(e.target!==s||s.id==='intro')return;if(s.id==='reward'){$('rwBtn').click();return}s.hidden=true}));
 $('bookBtn').onclick=()=>{
   $('bookCount').textContent=`${S.found.length} of ${SPICES.length} spices found. Merge to discover the rest.`;
   $('bookList').innerHTML=SPICES.map((s,t)=>S.found.includes(t)?`<div class="row">${jarHTML(t)}<div><b>${t+1}. ${s.n}</b><small>${s.f}</small></div></div>`:`<div class="row locked"><div class="jar locked">${potSVG(null)}</div><div><b>${t+1}. ???</b><small>Merge two ${SPICES[t-1].n} to find it.</small></div></div>`).join('');
@@ -1336,9 +1338,9 @@ function renderCrateBtn(){const b=$('crateBtn');if(!b)return;b.hidden=!(S.crates
 function crateArrives(){if(S.duel)return;S.crates=1;save();renderCrateBtn();setTimeout(()=>{toast('<b>A spice crate arrived!</b>Tap the crate to sort it for bonus coins.',3200);tone(523,.12,'triangle',.12);tone(784,.18,'triangle',.12,.1)},1300)}
 function crateShelves(){ // the 4 highest spices you have found, never two that look alike
   const f=[...S.found].sort((a,b)=>a-b);const pick=f.slice(-4);while(pick.length<4){const n=[0,1,2,3,4].find(t=>!pick.includes(t));pick.unshift(n)}return pick.sort((a,b)=>a-b)}
-function openCrate(){audio();if(!(S.crates>0))return;
-  $('crateIntroShelves').innerHTML=crateShelves().map(t=>`<div>${jarHTML(t,true)}<span>${SPICES[t].n}</span></div>`).join('');
-  openSheet('crateIntro')}
+function openCrate(){try{audio()}catch(e){}if(!(S.crates>0)){renderCrateBtn();return}
+  try{$('crateIntroShelves').innerHTML=crateShelves().map(t=>`<div>${jarHTML(t,true)}<span>${SPICES[t].n}</span></div>`).join('')}catch(e){}
+  document.querySelectorAll('.sheet').forEach(x=>{if(x.id!=='crateIntro')x.hidden=true});$('crateIntro').hidden=false;try{sfx.pick()}catch(e){}}
 function startCrate(){$('crateIntro').hidden=true;S.crates=0;save();renderCrateBtn();
   const sh=crateShelves(),q=[];for(let i=0;i<CRATE_N;i++)q.push(sh[Math.floor(Math.random()*sh.length)]);
   cg={sh,q,i:0,ok:0,streak:0,best:0,miss:0,coins:0,end:Date.now()+CRATE_MS,done:false};
