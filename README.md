@@ -54,3 +54,9 @@ Fight lines are now real recordings made with Microsoft's free neural voices: a 
 
 A calm market plays underneath the game: a far crowd murmur (built from the game's own recorded voices, blurred until no word can be understood), tea glasses clinking now and then, and a distant oud in maqam Hijaz. It is a 45-second seamless loop (`sounds/souk.mp3`, made by `tools/make-ambience.py`). **Shop → Souk sounds** turns it off; **Sound** silences everything. Voices and the background go through Web Audio gain nodes, because iPhones ignore an audio element's volume, which is what kept the fight voices loud.
 
+## Souk friends (added 2026-10-06)
+
+**Duel → 👥 Souk friends.** Everyone gets a 6-character friend code (`ABC-234`), shared as a link (`?friend=CODE`) or typed into *Add a friend*. Anyone you play a live duel with is added too, and the score between you is kept. Each friend shows a green dot while their game is open, a playful title from how they play, and two buttons: **⚔️ Duel** (opens a duel and invites them) and **🌶️ Poke** (a friendly line lands on their screen). *Edit list → Remove* removes someone, and a removed friend cannot add themselves back.
+
+How it stays safe and simple: phones talk directly over the same PeerJS link the duel uses, with no server and no account. A friend's code is their link address, so nobody can pretend to be someone else's code while that person is online. Only fixed words travel: a poke or a title is a number into a fixed list, never free text; a name is checked, escaped and capped at 20 characters. Pokes are limited to one every 20 seconds per friend, the list holds at most 40, and the list lives only on the phone (`localStorage`, key `spicesouk-friends`). Limits: the green dot and pokes only work while both games are open, and a new phone starts with an empty list.
+

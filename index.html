@@ -327,6 +327,26 @@ body.duel #crateBtn{display:none}
 .mem.locked{opacity:.55}.mem.locked p{font-style:normal}
 @media (max-height:600px){.jsit,.jsit svg{width:24px;height:24px}}
 @media (max-width:370px){.lane .stall{gap:3px}.jsit,.jsit svg{width:28px;height:28px}.stall .deco,.stall .deco svg{width:22px;height:22px}}
+.fl .card{max-height:90vh;overflow:auto}
+.fl h2{margin:0 0 2px}.fl .sub{margin:0 0 12px}
+.fl .me{display:flex;align-items:center;gap:10px;background:#f6e2bd;border-radius:16px;padding:10px 12px;margin:0 0 12px}
+.fl .me b{font-family:var(--display);font-size:13px;color:#7a4c2a;display:block}
+.fl .me code{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:.08em;color:#4a2412}
+.fl .me .btn{margin-left:auto;min-height:44px;padding:0 14px;flex:none}
+.fr{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:10px;align-items:center;background:#fff7e8;border-radius:18px;padding:10px 12px;margin-bottom:10px;box-shadow:0 2px 0 #e8cfa8;color:#3f1d0c}
+.fr .av{width:52px;height:52px;position:relative}.fr .av svg{width:52px;height:52px;border-radius:50%;background:#f3d9a8}
+.fr .dot{position:absolute;right:0;bottom:2px;width:14px;height:14px;border-radius:50%;border:2.5px solid #fff7e8}.fr .on{background:#58b847}.fr .off{background:#c9b28c}
+.fr .frt{min-width:0}
+.fr .nm{font-family:var(--display);font-weight:700;font-size:17px;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fr .tt{font-size:13px;color:#a0522d;font-weight:800}.fr .st{font-size:13px;color:#6e4f33;margin-top:1px}.fr .rec{font-family:var(--display);font-size:13px;color:#4a2412;margin-top:2px}
+.fr .acts{display:flex;flex-direction:column;gap:6px}.fr .acts .btn{min-height:44px;padding:0 12px;font-size:14px;white-space:nowrap}
+.fr .poke{background:#ffe2c2;color:#a3341e}.fr .poke:disabled{opacity:.45}
+.fl .add{width:100%;min-height:48px;margin:2px 0 8px}
+.fl .quiet{width:100%;min-height:44px;background:transparent;color:#7a4c2a;box-shadow:none}
+.fl .jd{display:flex;gap:10px;align-items:center;background:#f6e2bd;border-radius:16px;padding:12px;margin:0 0 12px;font-size:14px;color:#4a2412}
+.fl .jd svg{width:52px;height:52px;flex:none;border-radius:50%}
+#duelBtn{position:relative}#duelBtn.fr-on::after{content:'';position:absolute;top:6px;right:8px;width:11px;height:11px;border-radius:50%;background:#58b847;box-shadow:0 0 0 2px #3a1c0e}
+.frbtn{width:100%;min-height:48px;margin:0 0 10px;display:flex;align-items:center;justify-content:center;gap:8px}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -374,6 +394,12 @@ body.duel #crateBtn{display:none}
     <div class="cg-msg" id="cgMsg" aria-live="polite">Tap the shelf this pot belongs on</div>
   </div>
 
+  <div class="sheet fl" id="friendSheet" hidden><div class="card">
+    <h2>Souk friends</h2>
+    <p class="sub">Duel them, poke them, beat their score.</p>
+    <div id="frBody"></div>
+    <button class="btn dfull" type="button" data-close>Close</button>
+  </div></div>
   <div class="sheet" id="duelSheet" hidden><div class="card">
     <h2>Souk duel</h2>
     <p>Everyone gets the same tray and the same customers. 90 seconds. Most coins wins.</p>
@@ -1119,7 +1145,7 @@ function players(){ // everyone in this match, with scores
   if(!droom||!duel||!duel.go){const me={peer:'me',me:true,nick:myNick(),pts:S.duel?S.coins:(duel&&duel.final)||0,served:S.served||0};
     if(duel&&duel.challenge){const c=duel.challenge;return [me,{peer:'rival',me:false,nick:c.from,pts:c.score,served:0}].sort((a,b)=>b.pts-a.pts)}
     return [me]}
-  return droom.peers().filter(p=>p.presence&&p.presence.go===duel.go).map(p=>({peer:p.peer,me:p.sameTab,nick:String(p.presence.nick||'Player').slice(0,20),pts:+p.presence.pts||0,served:+p.presence.served||0,fin:!!p.presence.fin}))
+  return droom.peers().filter(p=>p.presence&&p.presence.go===duel.go).map(p=>({peer:p.peer,me:p.sameTab,nick:String(p.presence.nick||'Player').slice(0,20),pts:+p.presence.pts||0,served:+p.presence.served||0,fin:!!p.presence.fin,fc:p.presence.fc}))
     .sort((a,b)=>b.pts-a.pts||(a.peer<b.peer?-1:1));
 }
 function renderHud(){
@@ -1161,6 +1187,7 @@ function endMatch(){
     S=MAIN;MAIN=null;document.body.classList.remove('duel','locked');$('countdown').hidden=true;
     if(duel&&duel.challenge){challengeResult(D);return}
     const solo=ps.length===1,won=!solo&&ps[0].pts===D.coins;
+    if(!solo&&droom)try{frAfterDuel(ps,D.coins)}catch(e){}
     const prize=solo?10:won?80:20;S.coins+=prize;const best=D.coins>(S.duelBest||0);if(best)S.duelBest=D.coins;
     render();renderHud();
     const medals=['🥇','🥈','🥉'];
@@ -1212,9 +1239,10 @@ function ordinal(n){return n+(n%10===1&&n!==11?'st':n%10===2&&n!==12?'nd':n%10==
    The host's phone keeps the table of players and sends it to everyone. Same interface as the Claude room, so the match code is shared. */
 let pendingCode='';
 function loadPeerJS(){return window.Peer?Promise.resolve():new Promise((res,rej)=>{const s=document.createElement('script');s.src='peerjs.min.js';s.onload=res;s.onerror=()=>rej({code:'load'});document.head.appendChild(s)})}
-function peerOpts(){const q=new URLSearchParams(location.search),h=q.get('peerhost');return h?{host:h,port:+(q.get('peerport')||9000),path:'/',secure:false,debug:0}:{debug:0}}
+const BOOT_Q=location.search;  // read once: links strip their own params after loading
+function peerOpts(){const q=new URLSearchParams(BOOT_Q),h=q.get('peerhost');return h?{host:h,port:+(q.get('peerport')||9000),path:'/',secure:false,debug:0}:{debug:0}}
 const PEER_PREFIX='spicesouk-v1-',MAX_PLAYERS=6;
-function cleanPres(p,fromHost){p=p||{};const o={nick:String(p.nick||'Player').replace(/[<>]/g,'').slice(0,20),pts:Math.max(0,Math.min(1e6,+p.pts||0)),served:Math.max(0,Math.min(1e4,+p.served||0)),fin:!!p.fin,go:typeof p.go==='string'?p.go.slice(0,12):null,host:false};
+function cleanPres(p,fromHost){p=p||{};const o={nick:String(p.nick||'Player').replace(/[<>]/g,'').slice(0,20),pts:Math.max(0,Math.min(1e6,+p.pts||0)),served:Math.max(0,Math.min(1e4,+p.served||0)),fin:!!p.fin,go:typeof p.go==='string'?p.go.slice(0,12):null,fc:FR_RE.test(p.fc||'')?p.fc:null,host:false};
   if(fromHost){o.host=!!p.host;if(typeof p.seed==='number')o.seed=p.seed|0;if(typeof p.startAt==='number')o.startAt=p.startAt}return o}
 const peerRoom={join(name,asHost){return loadPeerJS().then(()=>new Promise((resolve,reject)=>{
   const code=String(name).replace(/^souk-/,''),hostId=PEER_PREFIX+code;
@@ -1269,7 +1297,7 @@ async function joinCode(code,asHost){
       dmsg=c==='limit_reached'?'Too many rooms open. Try again in a moment.':c==='nohost'?'No duel with that code right now. Check the 4 numbers, or ask your friend to open the duel first.':c==='full'?'That duel is full (6 players).':'Could not connect. Check your internet and try again.';
       renderDuelSheet();return}}
   duel={code,seen:false};dmsg='';
-  droom.presence({nick,host:!!asHost,go:null,pts:0,served:0,fin:false}).catch(()=>{});
+  droom.presence({nick,fc:FR.me,host:!!asHost,go:null,pts:0,served:0,fin:false}).catch(()=>{});
   if(unPeers)unPeers();unPeers=droom.onPeers(onPeersChange,()=>{droom=null;duel=null;renderDuelSheet()});
   renderDuelSheet();
 }
@@ -1293,11 +1321,121 @@ function startMatch(){
 async function leaveDuel(){if(unPeers){unPeers();unPeers=null}if(droom){try{await droom.leave()}catch(e){}}droom=null;duel=null;dmsg='';renderDuelSheet()}
 
 let dmsg='';
+/* ---------- souk friends: a code each, phone to phone over the same PeerJS link the duel uses ----------
+   No server and no account. Only fixed words travel: a poke is a number into POKES and a title a number
+   into TITLES, so nothing anyone types reaches another phone except a name (checked, escaped, capped).
+   A friend is who they say they are because their code IS their link address. Pokes are rate-limited
+   both ways, a removed friend stays removed, and the list is capped at FR_MAX. */
+const FR_KEY='spicesouk-friends',FR_ALPHA='ABCDEFGHJKMNPQRSTUVWXYZ23456789',FR_RE=/^[A-HJKMNP-Z2-9]{6}$/,FR_MAX=40,FR_IDP='f-';
+const POKES=['Yalla, duel me! 😤','Your karak is getting cold! 🍵','My chili beats your chili 🌶️','Jaddi says hurry up! 👴','Bet you can’t beat my score 😏','Salam! Come to the souk 👋'];
+const TITLES=['🧂 Cumin Rookie','🌶️ Chili Champion','🍵 Karak Legend','🏮 Lantern Keeper','👑 Souk Sultan','😴 Napping on the sacks','🐪 Spice Caravan'];
+let FR=frLoad(),frPeer=null,frReady=null,frEdit=false,frAdding=false,frMsg='',frTick=null;
+const frConns=new Map(),frPokeAt=new Map(),frGotAt=new Map();
+function frLoad(){let d={};try{d=JSON.parse(localStorage.getItem(FR_KEY)||'{}')||{}}catch(e){d={}}
+  if(!FR_RE.test(d.me||'')){const a=new Uint32Array(6);crypto.getRandomValues(a);d.me=[...a].map(x=>FR_ALPHA[x%FR_ALPHA.length]).join('')}
+  if(!d.list||typeof d.list!=='object')d.list={};if(!d.blocked||typeof d.blocked!=='object')d.blocked={};return d}
+function frSave(){try{localStorage.setItem(FR_KEY,JSON.stringify(FR))}catch(e){}}
+function frFmt(c){return c.slice(0,3)+'-'+c.slice(3)}
+function frParse(v){const c=String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');return FR_RE.test(c)?c:null}
+function frNick(v){return String(v||'').replace(/[<>\u0000-\u001f]/g,'').trim().slice(0,20)||'Mystery Merchant'}
+function frOn(code){const c=frConns.get(code);return !!(c&&c.open)}
+function myTitle(){const s=MAIN||S;return (s.duelBest||0)>=300?4:(s.duelBest||0)>=150?1:(s.served||0)>=150?2:(s.souk||0)>=1?3:(s.served||0)>=40?6:0}
+function frHi(){return {t:'hi',v:1,code:FR.me,nick:myNick()==='Player'?'':myNick(),title:myTitle(),coins:Math.max(0,Math.min(1e7,(MAIN||S).coins|0))}}
+function frUpdateBadge(){const b=$('duelBtn');if(b)b.classList.toggle('fr-on',[...frConns.keys()].some(frOn))}
+function frStart(){if(frReady)return frReady;
+  frReady=loadPeerJS().then(()=>new Promise(res=>{let done=false;const fin=ok=>{if(done)return;done=true;if(!ok){try{frPeer&&frPeer.destroy()}catch(e){}frPeer=null;frReady=null}res(ok)};  // a failed start is retried next time, never cached
+    try{frPeer=new Peer(PEER_PREFIX+FR_IDP+FR.me,peerOpts())}catch(e){frReady=null;return fin(false)}
+    frPeer.on('open',()=>{fin(true);frRefresh()});
+    frPeer.on('connection',c=>{if(Object.keys(FR.list).length>=FR_MAX&&!FR.list[c.peer.slice((PEER_PREFIX+FR_IDP).length)]){c.close();return}frWire(c,null)});
+    frPeer.on('disconnected',()=>{try{frPeer.reconnect()}catch(e){}});
+    frPeer.on('error',e=>{const t=e&&e.type;if(t==='unavailable-id'||t==='network'||t==='server-error'||t==='socket-error'||t==='browser-incompatible')fin(false)});
+    setTimeout(()=>fin(false),9000)})).catch(()=>{frReady=null;return false});
+  if(!frTick)frTick=setInterval(()=>{if(!document.hidden&&frPeer&&Object.keys(FR.list).length)frRefresh()},90000);
+  return frReady}
+/* one link per friend; an incoming link must say hello within 6 seconds or it is closed */
+function frWire(c,code){c.frCode=code;let hello=false;
+  setTimeout(()=>{if(!hello)try{c.close()}catch(e){}},6000);
+  c.on('open',()=>{if(code)c.send(frHi())});
+  c.on('data',d=>{if(!d||typeof d!=='object')return;
+    if(d.t==='hi'){const k=frParse(d.code);if(!k||k===FR.me||c.peer!==PEER_PREFIX+FR_IDP+k||FR.blocked[k])return c.close();
+      if(code&&k!==code)return c.close();hello=true;
+      const isNew=!FR.list[k]||FR.list[k].pending;if(!FR.list[k]&&Object.keys(FR.list).length>=FR_MAX)return c.close();
+      const f=FR.list[k]||(FR.list[k]={w:0,l:0});f.nick=frNick(d.nick||f.nick);f.title=(d.title|0)>=0&&(d.title|0)<TITLES.length&&(d.title|0)!==5?d.title|0:0;f.coins=Math.max(0,Math.min(1e7,d.coins|0));f.seen=Date.now();delete f.pending;
+      const old=frConns.get(k);if(old&&old!==c)try{old.close()}catch(e){}frConns.set(k,c);c.frCode=k;
+      if(!code&&!c.saidHi){c.saidHi=1;c.send(frHi())}
+      if(isNew){frMsg='';frAdding=false}frSave();frUpdateBadge();renderFriends();if(isNew)toast(`<b>👥 ${esc(f.nick)} is now your souk friend</b>Duel them or send a poke.`,3200);return}
+    const k=c.frCode,f=k&&FR.list[k];if(!f||!hello&&!code)return;
+    if(d.t==='poke'){const i=d.i|0;if(i<0||i>=POKES.length)return;const now=Date.now();if(now-(frGotAt.get(k)||0)<8000)return;frGotAt.set(k,now);
+      f.seen=now;frSave();if(S.muted!==true){tone(880,.08,'triangle',.12);tone(660,.12,'triangle',.12,.09)}buzz(25);
+      toast(`<b>🌶️ ${esc(f.nick)} poked you!</b>“${esc(POKES[i])}”`,3800);renderFriends();return}
+    if(d.t==='duel'){const dc=String(d.code||'');if(!/^\d{4}$/.test(dc)||S.duel||droom)return;
+      pendingCode=dc;dmsg=`${f.nick} wants a duel! Tap Join.`;$('friendSheet').hidden=true;renderDuelSheet();openSheet('duelSheet');tone(784,.12,'triangle',.14);return}});
+  c.on('close',()=>{if(c.frCode&&frConns.get(c.frCode)===c){frConns.delete(c.frCode);const f=FR.list[c.frCode];if(f){f.seen=Date.now();frSave()}frUpdateBadge();renderFriends()}});
+  c.on('error',()=>{})}
+function frConnect(code){if(!frPeer||frPeer.disconnected||frOn(code))return Promise.resolve(frOn(code));
+  return new Promise(res=>{let c;try{c=frPeer.connect(PEER_PREFIX+FR_IDP+code,{reliable:true})}catch(e){return res(false)}frWire(c,code);
+    const t0=Date.now(),iv=setInterval(()=>{if(frConns.get(code)===c&&c.open){clearInterval(iv);res(true)}else if(Date.now()-t0>8000){clearInterval(iv);if(frConns.get(code)!==c)try{c.close()}catch(e){}res(false)}},150)})}
+function frRefresh(){Object.keys(FR.list).filter(k=>!frOn(k)).slice(0,FR_MAX).forEach(k=>frConnect(k).then(()=>renderFriends()))}
+function frAgo(t){if(!t)return'';const m=Math.round((Date.now()-t)/60000);return m<2?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+'h ago':m<2880?'yesterday':Math.round(m/1440)+' days ago'}
+function renderFriends(){const b=$('frBody');if(!b||$('friendSheet').hidden)return;
+  const ks=Object.keys(FR.list).sort((a,b2)=>{const A=FR.list[a],B=FR.list[b2];return (frOn(b2)-frOn(a))||(!!A.pending-!!B.pending)||((B.seen||0)-(A.seen||0))});
+  const rows=ks.map(k=>{const f=FR.list[k],on=frOn(k),nm=f.pending?'New friend':f.nick,lead=(f.l|0)>(f.w|0);
+    const title=f.pending?'🫖 On the way':(!on&&Date.now()-(f.seen||0)>2*3600e3)?TITLES[5]:TITLES[f.title|0]||TITLES[0];
+    const st=f.pending?`Waiting to meet · <span style="white-space:nowrap">${frFmt(k)}</span><br>They join when you’re both in the souk.`:on?`In the souk now · ${(f.coins|0).toLocaleString()} coins`:`Last seen ${frAgo(f.seen)}`;
+    const rec=(f.w|0)+(f.l|0)?`You ${f.w|0} – ${f.l|0} ${esc(nm.split(' ')[0])}`:'No duels yet';
+    const acts=frEdit?`<button class="btn poke" type="button" data-rm="${k}">Remove</button>`
+      :`<button class="btn warm" type="button" data-duel="${k}">⚔️ Duel</button><button class="btn poke" type="button" data-poke="${k}"${on?'':' disabled'} aria-label="Poke ${esc(nm)}">🌶️ Poke</button>`;
+    return `<div class="fr"><div class="av">${personSVG(nm,on?'happy':'calm')}<span class="dot ${on?'on':'off'}" aria-hidden="true"></span></div>
+      <div class="frt"><div class="nm">${lead?'👑 ':''}${esc(nm)}</div><div class="tt">${title}</div><div class="st">${st}</div><div class="rec">${rec}</div></div><div class="acts">${acts}</div></div>`}).join('');
+  const empty=`<div class="jd">${personSVG('Jaddi Saeed','happy')}<div><b>Jaddi says:</b><br>“A souk with no friends is just a shop, ya wildi. Bring someone!”</div></div>`;
+  b.innerHTML=`${myNick()==='Player'?`<label class="dlabel" for="frNick">Your name for friends</label><input class="field" id="frNick" maxlength="20" placeholder="Your name" autocomplete="nickname">`:''}
+    ${ks.length?'':empty}
+    <div class="me"><div><b>Your friend code</b><code>${frFmt(FR.me)}</code></div><button class="btn" type="button" id="frShare">📲 Share</button></div>
+    ${rows}
+    ${frAdding?`<div class="drow"><input class="field" id="frCodeIn" maxlength="7" placeholder="ABC-234" aria-label="Friend code" autocapitalize="characters" autocomplete="off"><button class="btn warm" type="button" id="frAddGo">Add</button></div>`
+      :`<button class="btn ${ks.length?'':'warm '}add" type="button" id="frAdd">➕ Add a friend with their code</button>`}
+    ${frMsg?`<p class="dnote">${esc(frMsg)}</p>`:''}
+    ${ks.length?`<button class="btn quiet" type="button" id="frEditBtn">${frEdit?'Done':'Edit list'}</button>`:''}`;
+  if($('frNick'))$('frNick').onchange=e=>{const n=frNick(e.target.value);if(n!=='Friend'){(MAIN||S).nick=n;save();frConns.forEach(c=>{try{c.open&&c.send(frHi())}catch(x){}});renderFriends()}};
+  $('frShare').onclick=frShare;
+  if($('frAdd'))$('frAdd').onclick=()=>{frAdding=true;frMsg='';renderFriends();setTimeout(()=>$('frCodeIn')&&$('frCodeIn').focus(),50)};
+  if($('frAddGo')){$('frAddGo').onclick=()=>frAdd($('frCodeIn').value);$('frCodeIn').onkeydown=e=>{if(e.key==='Enter')$('frAddGo').click()}}
+  if($('frEditBtn'))$('frEditBtn').onclick=()=>{frEdit=!frEdit;renderFriends()};
+  b.querySelectorAll('[data-poke]').forEach(x=>x.onclick=()=>frPoke(x.dataset.poke,x));
+  b.querySelectorAll('[data-duel]').forEach(x=>x.onclick=()=>frDuel(x.dataset.duel));
+  b.querySelectorAll('[data-rm]').forEach(x=>x.onclick=()=>{const k=x.dataset.rm;delete FR.list[k];FR.blocked[k]=1;const c=frConns.get(k);frConns.delete(k);if(c)try{c.close()}catch(e){}frSave();frUpdateBadge();renderFriends()})}
+async function frAdd(v){const k=frParse(v);audio();
+  if(!k){frMsg='A friend code is 6 letters and numbers, like ABC-234.';return renderFriends()}
+  if(k===FR.me){frMsg='That’s your own code 😄 Share it with a friend instead.';return renderFriends()}
+  delete FR.blocked[k];if(!FR.list[k]){if(Object.keys(FR.list).length>=FR_MAX){frMsg=`Your list is full (${FR_MAX} friends).`;return renderFriends()}FR.list[k]={pending:true,w:0,l:0,seen:0}}
+  frSave();frAdding=false;frMsg='Looking for them in the souk…';renderFriends();
+  const ok=await frStart()&&await frConnect(k);
+  frMsg=ok?'':'Added. They’ll appear here the next time you’re both in the souk.';renderFriends()}
+async function frShare(){audio();const url=location.origin+location.pathname+'?friend='+FR.me,text=`Be my Spice Souk friend! My code is ${frFmt(FR.me)}`;
+  try{if(navigator.share){await navigator.share({title:'Spice Souk friends',text,url});return}}catch(e){if(e&&e.name==='AbortError')return}
+  try{await navigator.clipboard.writeText(text+' '+url);frMsg='Link copied. Paste it to your friend.'}catch(e){frMsg=url}renderFriends()}
+function frPoke(k,btn){audio();const c=frConns.get(k);if(!c||!c.open)return;const now=Date.now();
+  if(now-(frPokeAt.get(k)||0)<20000){frMsg='Easy! One poke every 20 seconds 😄';return renderFriends()}
+  frPokeAt.set(k,now);const i=Math.floor(Math.random()*POKES.length);try{c.send({t:'poke',i})}catch(e){}
+  tone(988,.08,'triangle',.12);plus(btn,'🌶️');frMsg=`You poked ${FR.list[k].nick}: “${POKES[i]}”`;renderFriends()}
+async function frDuel(k){audio();const f=FR.list[k];if(!f)return;$('friendSheet').hidden=true;renderDuelSheet();openSheet('duelSheet');
+  await joinCode(String(1000+Math.floor(Math.random()*9000)),true);if(!droom||!duel||!duel.code)return;
+  const c=frConns.get(k);
+  if(c&&c.open){try{c.send({t:'duel',code:duel.code})}catch(e){}dmsg=`Invite sent to ${f.nick}. Start when they join.`}
+  else dmsg=`${f.pending?'Your friend':f.nick} isn’t in the souk right now. Send them the invite link.`;
+  renderDuelSheet()}
+/* a duel adds everyone in it to your friends and keeps the score between you */
+function frAfterDuel(ps,myPts){let changed=false;ps.forEach(p=>{const k=frParse(p.fc);if(p.me||!k||k===FR.me||FR.blocked[k])return;
+  if(!FR.list[k]){if(Object.keys(FR.list).length>=FR_MAX)return;FR.list[k]={w:0,l:0,pending:true,seen:Date.now()}}
+  const f=FR.list[k];f.nick=frNick(p.nick);delete f.pending;f.seen=Date.now();if(myPts>p.pts)f.w=(f.w|0)+1;else if(myPts<p.pts)f.l=(f.l|0)+1;changed=true});
+  if(changed){frSave();frStart().then(ok=>ok&&frRefresh())}}
+function openFriends(){audio();frEdit=false;frAdding=false;frMsg='';$('duelSheet').hidden=true;openSheet('friendSheet');renderFriends();frStart().then(ok=>{if(!ok&&!frMsg){frMsg='Can’t reach the souk right now. Friends still work once you’re online.';renderFriends()}else frRefresh()})}
 function renderDuelSheet(){
   const b=$('duelBody');if(!b)return;const nick=esc(myNick());
   if(!room){b.innerHTML=`<p class="dnote"><b>Challenge a friend.</b> Play a 90-second round, then send them a link. They play the exact same round and try to beat your score.</p><button class="btn warm dfull" id="pracBtn" type="button">Play a challenge round</button>`;$('pracBtn').onclick=practice;return}
   if(!droom){
-    b.innerHTML=`<label class="dlabel" for="nickIn">Your name in the duel</label><input class="field" id="nickIn" maxlength="20" value="${nick}" autocomplete="nickname">
+    const fn=Object.keys(FR.list).length,fo=[...frConns.keys()].filter(frOn).length;
+    b.innerHTML=`<button class="btn frbtn" id="frOpen" type="button">👥 Souk friends${fn?` · ${fn}`:''}${fo?` · ${fo} here now`:''}</button><label class="dlabel" for="nickIn">Your name in the duel</label><input class="field" id="nickIn" maxlength="20" value="${nick}" autocomplete="nickname">
       <button class="btn warm dfull" id="hostBtn" type="button">Start a duel</button>
       <div class="or">or join a friend</div>
       <div class="drow"><input class="field" id="codeIn" inputmode="numeric" maxlength="4" placeholder="4-digit code" aria-label="Duel code" value="${esc(pendingCode)}"><button class="btn${pendingCode?' warm':''}" id="joinBtn" type="button">Join</button></div>
@@ -1306,7 +1444,7 @@ function renderDuelSheet(){
     $('hostBtn').onclick=()=>{audio();joinCode(String(1000+Math.floor(Math.random()*9000)),true)};
     $('joinBtn').onclick=()=>{audio();const c=$('codeIn').value.trim();pendingCode='';if(!/^\d{4}$/.test(c)){dmsg='The code is 4 numbers.';renderDuelSheet();return}joinCode(c,false)};
     $('codeIn').onkeydown=e=>{if(e.key==='Enter')$('joinBtn').click()};
-    $('pracBtn').onclick=practice;return;
+    $('pracBtn').onclick=practice;$('frOpen').onclick=openFriends;return;
   }
   const ps=droom.peers(),host=amHost(),h=hostPeer();
   const rows=ps.map(p=>{const n=String((p.presence&&p.presence.nick)||'Joining…').slice(0,20);return `<div><span class="dot" style="background:${colorOf(p.peer)}"></span>${esc(p.sameTab?n+' (you)':n)}<small>${p.presence&&p.presence.host?'host':''}</small></div>`}).join('');
@@ -1328,6 +1466,9 @@ const _rw=$('rwBtn').onclick;$('rwBtn').onclick=()=>{_rw();if(duel&&duel.after&&
 {const c=readChallenge();if(c)setTimeout(()=>showChallenge(c),300)}
 {const dc=new URLSearchParams(location.search).get('duel');if(/^\d{4}$/.test(dc||'')){pendingCode=dc;setTimeout(()=>{S.intro=true;if(S.guide==null||S.guide<3)S.guide=3;$('intro').hidden=true;save();dmsg='Your friend invited you to a live duel. Type your name and tap Join.';renderDuelSheet();openSheet('duelSheet');try{history.replaceState(null,'',location.pathname+location.search.replace(/[?&]duel=\d{4}/,'').replace(/^&/,'?'))}catch(e){}},300)}}
 room=peerRoom;
+{const fq=frParse(new URLSearchParams(location.search).get('friend'));if(fq&&fq!==FR.me){delete FR.blocked[fq];if(!FR.list[fq]&&Object.keys(FR.list).length<FR_MAX)FR.list[fq]={pending:true,w:0,l:0,seen:0};frSave();
+  setTimeout(()=>{S.intro=true;if(S.guide==null||S.guide<3)S.guide=3;$('intro').hidden=true;save();openFriends();frMsg='Adding your friend… they appear when you’re both in the souk.';renderFriends();try{history.replaceState(null,'',location.pathname+location.search.replace(/[?&]friend=[^&]*/,'').replace(/^&/,'?'))}catch(e){}},300)}
+  else if(Object.keys(FR.list).length)setTimeout(()=>frStart(),2500)}
 (async()=>{try{if(window.claude&&typeof window.claude.use==='function'){room=await window.claude.use('room');
   if(!S.nick){const u=await window.claude.use('user');if(u){const me=await u.me();if(me&&me.name){S.nick=me.name.split(' ')[0].slice(0,20);save()}}}}}catch(e){room=null}
   if(!$('duelSheet').hidden)renderDuelSheet()})();
